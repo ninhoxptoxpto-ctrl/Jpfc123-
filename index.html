@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -119,4 +119,70 @@ function chutar() {
 }
 
 function loop() {
-  ctx.clearRect(0
+  ctx.clearRect(0,0,320,420);
+
+  // campo
+  ctx.strokeStyle="white";
+  ctx.strokeRect(10,10,300,400);
+  ctx.strokeRect(120,10,80,20);
+
+  // goleiro Chico
+  goleiro.x += goleiro.dir * 2;
+  if (goleiro.x > 220 || goleiro.x < 100) goleiro.dir *= -1;
+  ctx.fillStyle="yellow";
+  ctx.fillRect(goleiro.x-25,30,50,8);
+
+  // zagueiro Palasque
+  zagueiro.x += zagueiro.dir * 2;
+  if (zagueiro.x > 260 || zagueiro.x < 60) zagueiro.dir *= -1;
+  ctx.fillStyle="red";
+  ctx.fillRect(zagueiro.x-15,zagueiro.y,30,8);
+
+  // jogador
+  ctx.fillStyle="blue";
+  ctx.beginPath();
+  ctx.arc(jogador.x,jogador.y,10,0,Math.PI*2);
+  ctx.fill();
+
+  // nome e número na camisa
+  ctx.fillStyle="white";
+  ctx.font="10px Arial";
+  ctx.fillText(numero,jogador.x-5,jogador.y+4);
+
+  // bola
+  ctx.beginPath();
+  ctx.arc(bola.x,bola.y,6,0,Math.PI*2);
+  ctx.fill();
+
+  bola.y += bola.vy;
+  bola.vy *= 0.98;
+
+  // colisão zagueiro
+  if (bola.y < zagueiro.y+8 && bola.x > zagueiro.x-15 && bola.x < zagueiro.x+15) {
+    bola.vy = 3;
+  }
+
+  // defesa goleiro
+  if (bola.y < 38 && bola.x > goleiro.x-25 && bola.x < goleiro.x+25) {
+    bola.vy = 3;
+  }
+
+  // gol
+  if (bola.y < 10 && bola.x > 120 && bola.x < 200) {
+    gols++;
+    document.getElementById("gols").innerText=gols;
+    bola.y=315;
+    bola.vy=0;
+  }
+
+  if (bola.y > 420) {
+    bola.y=315;
+    bola.vy=0;
+  }
+
+  requestAnimationFrame(loop);
+}
+</script>
+
+</body>
+</html> 
