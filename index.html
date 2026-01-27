@@ -4,32 +4,51 @@
 <meta charset="UTF-8">
 <title>Mini Futebol JP</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body{margin:0;background:#0b5d2a;font-family:Arial;color:white;text-align:center}
+#menu{padding:20px}
+select,button{padding:10px;margin:6px;font-size:16px}
 #campo{
   width:320px;height:480px;margin:auto;
-  background:#1e7f3f;border:4px solid white;position:relative
+  background:#1e7f3f;border:4px solid white;
+  position:relative;display:none
 }
-.gol{
-  position:absolute;left:100px;width:120px;height:30px;border:3px solid white
-}
+.gol{position:absolute;left:100px;width:120px;height:30px;border:3px solid white}
 #golsup{top:0} #golinf{bottom:0}
 .jogador,.zagueiro,.goleiro,.bola{
-  position:absolute;border-radius:50%;
+  position:absolute;
   display:flex;align-items:center;justify-content:center;
   font-size:9px;font-weight:bold;color:white;text-align:center
 }
-.jogador{width:26px;height:26px}
-.zagueiro{width:26px;height:26px}
+.jogador,.zagueiro{width:26px;height:26px;border-radius:50%}
 .goleiro{width:44px;height:14px;background:black;border-radius:6px}
-.bola{width:12px;height:12px;background:white}
-button{padding:8px 14px;margin:3px}
+.bola{width:12px;height:12px;background:white;border-radius:50%}
 </style>
 </head>
 
 <body>
 
-<h3>⚽ Mini Futebol JP — Ataque & Defesa</h3>
+<div id="menu">
+  <h3>⚽ Escolha os Times</h3>
+  <p>Seu time</p>
+  <select id="meuTime">
+    <option value="#00e676">Fantasma FC</option>
+    <option value="#03a9f4">Raios de Gelo</option>
+    <option value="#ff9800">Praia do Dragão</option>
+    <option value="#9c27b0">Gamers</option>
+  </select>
+
+  <p>Time adversário</p>
+  <select id="advTime">
+    <option value="#e53935">Fantasma FC</option>
+    <option value="#1565c0">Raios de Gelo</option>
+    <option value="#f44336">Praia do Dragão</option>
+    <option value="#6a1b9a">Gamers</option>
+  </select>
+  <br>
+  <button onclick="start()">▶️ Jogar</button>
+</div>
 
 <div id="campo">
   <div id="golsup" class="gol"></div>
@@ -41,59 +60,68 @@ button{padding:8px 14px;margin:3px}
   <div id="z1" class="zagueiro"></div>
   <div id="z2" class="zagueiro"></div>
 
-  <div id="gk1" class="goleiro"></div>
-  <div id="gk2" class="goleiro"></div>
+  <div id="gkMeu" class="goleiro"></div>
+  <div id="gkAdv" class="goleiro"></div>
 
   <div id="bola" class="bola"></div>
 </div>
 
-<div>
+<div id="controles" style="display:none">
 <button onclick="move(0,-10)">⬆️</button><br>
 <button onclick="move(-10,0)">⬅️</button>
 <button onclick="move(10,0)">➡️</button><br>
-<button onclick="move(0,10)">⬇️</button><br><br>
+<button onclick="move(0,10)">⬇️</button><br>
 <button onclick="passe()">🤝 Passe</button>
 <button onclick="chutar()">⚽ Chutar</button>
 </div>
 
 <script>
-/* === CONFIG DOS TIMES === */
-const meuTime={cor:"#00e676"};
-const advTime={cor:"#e53935"};
+const el=id=>document.getElementById(id);
 
-j1.style.background=meuTime.cor;
-j2.style.background=meuTime.cor;
-z1.style.background=advTime.cor;
-z2.style.background=advTime.cor;
-
-/* === OBJETOS === */
-const j1p={x:130,y:360};
-const j2p={x:190,y:360};
+/* POSIÇÕES */
+const j1={x:130,y:360};
+const j2={x:190,y:360};
 const bola={x:160,y:330};
 
-const z1p={x:90,y:200,temBola:false};
-const z2p={x:210,y:200,temBola:false};
+const z1={x:90,y:200,tem:false};
+const z2={x:210,y:200,tem:false};
 
-const gkMeu={x:140,y:430};
+const gkMeu={x:140,y:440};
 const gkAdv={x:140,y:20};
 
 let atual=1;
 let dono="jogador";
 let anim=false;
 
-const el=id=>document.getElementById(id);
-const pos=(id,o)=>{el(id).style.left=o.x+"px";el(id).style.top=o.y+"px"};
+function start(){
+  const meu=el("meuTime").value;
+  const adv=el("advTime").value;
+
+  el("j1").style.background=meu;
+  el("j2").style.background=meu;
+  el("z1").style.background=adv;
+  el("z2").style.background=adv;
+
+  el("menu").style.display="none";
+  el("campo").style.display="block";
+  el("controles").style.display="block";
+  draw();
+}
+
+function pos(id,o){
+  el(id).style.left=o.x+"px";
+  el(id).style.top=o.y+"px";
+}
 
 function draw(){
-  pos("j1",j1p);pos("j2",j2p);
-  pos("z1",z1p);pos("z2",z2p);
-  pos("gk1",gkMeu);pos("gk2",gkAdv);
+  pos("j1",j1);pos("j2",j2);
+  pos("z1",z1);pos("z2",z2);
+  pos("gkMeu",gkMeu);pos("gkAdv",gkAdv);
   pos("bola",bola);
 }
 
-function jogador(){return atual===1?j1p:j2p}
+function jogador(){return atual===1?j1:j2}
 
-/* === MOVIMENTO === */
 function move(dx,dy){
   if(anim||dono!=="jogador")return;
   let j=jogador();
@@ -102,12 +130,11 @@ function move(dx,dy){
   draw();
 }
 
-/* === PASSE === */
 function passe(){
   if(anim||dono!=="jogador")return;
   anim=true;
   let o=jogador();
-  let d=atual===1?j2p:j1p;
+  let d=atual===1?j2:j1;
   let i=0;
   let it=setInterval(()=>{
     bola.x+=(d.x-o.x)/20;
@@ -122,7 +149,6 @@ function passe(){
   },30);
 }
 
-/* === CHUTE === */
 function chutar(){
   if(anim||dono!=="jogador")return;
   anim=true;
@@ -140,24 +166,23 @@ function chutar(){
   },30);
 }
 
-/* === IA ADVERSÁRIA === */
+/* IA ADVERSÁRIA — CHUTA SEM FALHAR */
 setInterval(()=>{
   let alvo=dono==="jogador"?jogador():bola;
 
-  [z1p,z2p].forEach(z=>{
-    if(!z.temBola){
-      z.x+=(alvo.x-z.x)/20;
-      z.y+=(alvo.y-z.y)/20;
+  [z1,z2].forEach(z=>{
+    if(!z.tem){
+      z.x+=(alvo.x-z.x)/18;
+      z.y+=(alvo.y-z.y)/18;
       if(colide(z,bola)){
-        z.temBola=true;
-        dono="zagueiro";
+        z.tem=true;
+        dono="adv";
       }
     }else{
       bola.x=z.x+7;
       bola.y=z.y+20;
-      z.y+=2.2;
-
-      if(z.y>400){
+      z.y+=2.5;
+      if(z.y>380){
         chuteAdv();
       }
     }
@@ -166,9 +191,8 @@ setInterval(()=>{
   draw();
 },80);
 
-/* === CHUTE ADVERSÁRIO === */
 function chuteAdv(){
-  z1p.temBola=false;z2p.temBola=false;
+  z1.tem=false;z2.tem=false;
   let it=setInterval(()=>{
     bola.y+=14;
     draw();
@@ -183,21 +207,20 @@ function chuteAdv(){
   },30);
 }
 
-/* === GOLEIROS SE MEXEM === */
+/* GOLEIROS */
 setInterval(()=>{
-  gkMeu.x+=(bola.x-gkMeu.x)/8;
-  gkAdv.x+=(bola.x-gkAdv.x)/8;
+  gkMeu.x+=(bola.x-gkMeu.x)/6;
+  gkAdv.x+=(bola.x-gkAdv.x)/6;
   draw();
 },60);
 
-/* === ROUBO === */
+/* ROUBO */
 setInterval(()=>{
-  if(dono==="zagueiro"){
+  if(dono==="adv"){
     let j=jogador();
     if(colide(j,bola)){
       dono="jogador";
-      z1p.temBola=false;
-      z2p.temBola=false;
+      z1.tem=false;z2.tem=false;
     }
   }
 },50);
@@ -207,18 +230,16 @@ function colide(a,b){
 }
 
 function reset(){
-  j1p.x=130;j1p.y=360;
-  j2p.x=190;j2p.y=360;
-  z1p.x=90;z1p.y=200;z1p.temBola=false;
-  z2p.x=210;z2p.y=200;z2p.temBola=false;
+  j1.x=130;j1.y=360;
+  j2.x=190;j2.y=360;
+  z1.x=90;z1.y=200;z2.x=210;z2.y=200;
   bola.x=160;bola.y=330;
   dono="jogador";
   atual=1;
   anim=false;
   draw();
 }
-
-draw();
 </script>
+
 </body>
-</html>
+  </html>
