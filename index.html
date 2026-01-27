@@ -1,70 +1,124 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Mini Futebol JP</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Mini Futebol JP</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      margin: 0;
-      background: #0b6623;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding-top: 40px;
-    }
+<style>
+  body {
+    margin: 0;
+    background: #0b6623;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+  }
 
-    #startScreen {
-      display: block;
-    }
+  #menu {
+    padding-top: 40px;
+  }
 
-    button {
-      padding: 15px 30px;
-      font-size: 20px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      background: #ffd700;
-    }
+  button {
+    padding: 12px 20px;
+    margin: 8px;
+    font-size: 18px;
+    border-radius: 10px;
+    border: none;
+  }
 
-    canvas {
-      display: none;
-      background: #1e8f3a;
-      border: 4px solid white;
-      border-radius: 12px;
-      margin: 20px auto;
-    }
-  </style>
+  canvas {
+    display: none;
+    background: #1e7f3f;
+    border: 4px solid white;
+    border-radius: 12px;
+    margin: auto;
+  }
+
+  #placar {
+    display: none;
+    font-size: 22px;
+    margin-top: 10px;
+  }
+</style>
 </head>
 
 <body>
 
-  <div id="startScreen">
-    <h1>⚽ Mini Futebol JP</h1>
-    <button id="startBtn">ENTRAR NO JOGO</button>
-  </div>
+<div id="menu">
+  <h1>⚽ Mini Futebol JP</h1>
+  <p>Escolha seu time:</p>
+  <button onclick="iniciar('Brasil')">🇧🇷 Brasil</button>
+  <button onclick="iniciar('Argentina')">🇦🇷 Argentina</button>
+  <button onclick="iniciar('França')">🇫🇷 França</button>
+  <button onclick="iniciar('Alemanha')">🇩🇪 Alemanha</button>
+</div>
 
-  <canvas id="game" width="300" height="400"></canvas>
+<div id="placar">Gols: <span id="gols">0</span></div>
 
-  <script>
-    const startBtn = document.getElementById("startBtn");
-    const startScreen = document.getElementById("startScreen");
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
+<canvas id="game" width="300" height="400"></canvas>
 
-    startBtn.onclick = () => {
-      startScreen.style.display = "none";
-      canvas.style.display = "block";
-      desenhar();
-    };
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const menu = document.getElementById("menu");
+const placar = document.getElementById("placar");
+const golsTxt = document.getElementById("gols");
 
-    function desenhar() {
-      ctx.fillStyle = "white";
-      ctx.font = "20px Arial";
-      ctx.fillText("🏟️ Jogo carregado!", 70, 200);
-    }
-  </script>
+let bola = { x: 150, y: 200, r: 10, vx: 2, vy: 2 };
+let gols = 0;
+
+function iniciar(time) {
+  menu.style.display = "none";
+  canvas.style.display = "block";
+  placar.style.display = "block";
+  desenhar();
+}
+
+canvas.addEventListener("click", () => {
+  bola.vy = -3;
+});
+
+function desenharCampo() {
+  ctx.fillStyle = "#1e7f3f";
+  ctx.fillRect(0, 0, 300, 400);
+
+  // gol
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(100, 0, 100, 20);
+}
+
+function desenharBola() {
+  ctx.beginPath();
+  ctx.arc(bola.x, bola.y, bola.r, 0, Math.PI * 2);
+  ctx.fillStyle = "white";
+  ctx.fill();
+}
+
+function atualizar() {
+  bola.x += bola.vx;
+  bola.y += bola.vy;
+
+  if (bola.x < 10 || bola.x > 290) bola.vx *= -1;
+  if (bola.y > 390) bola.vy *= -1;
+
+  // GOL
+  if (bola.y < 20 && bola.x > 100 && bola.x < 200) {
+    gols++;
+    golsTxt.innerText = gols;
+    bola.x = 150;
+    bola.y = 200;
+  }
+}
+
+function desenhar() {
+  ctx.clearRect(0, 0, 300, 400);
+  desenharCampo();
+  desenharBola();
+  atualizar();
+  requestAnimationFrame(desenhar);
+}
+</script>
 
 </body>
-</html>
+</html> 
