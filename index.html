@@ -3,107 +3,221 @@
 <head>
 <meta charset="UTF-8">
 <title>Mini Futebol JP</title>
+
 <style>
-  body {
-    background: #0b6623;
-    color: white;
-    font-family: Arial, sans-serif;
-    text-align: center;
-  }
+body {
+  background: #0b5f2a;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
 
-  canvas {
-    background: #1e7f3f;
-    border: 4px solid white;
-    margin-top: 10px;
-  }
+#campo {
+  position: relative;
+  width: 320px;
+  height: 480px;
+  margin: auto;
+  background: #1e7f3f;
+  border: 5px solid white;
+  border-radius: 10px;
+}
 
-  button {
-    padding: 12px 20px;
-    margin: 5px;
-    font-size: 16px;
-    border-radius: 10px;
-    border: none;
-  }
+/* Gol */
+#gol {
+  position: absolute;
+  top: 0;
+  left: 80px;
+  width: 160px;
+  height: 40px;
+  border: 4px solid white;
+}
+
+/* Elementos */
+.jogador, .zagueiro, .goleiro, .bola {
+  position: absolute;
+}
+
+.jogador {
+  width: 28px;
+  height: 28px;
+  background: #00ff88;
+  border-radius: 50%;
+}
+
+.zagueiro {
+  width: 28px;
+  height: 28px;
+  background: #ff5555;
+  border-radius: 50%;
+}
+
+.goleiro {
+  width: 35px;
+  height: 15px;
+  background: black;
+  border-radius: 5px;
+}
+
+.bola {
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+}
+
+/* Nome */
+.nome {
+  position: absolute;
+  top: 30px;
+  font-size: 10px;
+  width: 70px;
+  left: -20px;
+}
+
+/* Botões */
+button {
+  margin: 4px;
+  padding: 10px 15px;
+  font-size: 16px;
+}
 </style>
 </head>
 
 <body>
 
-<h2>⚽ Mini Futebol JP</h2>
-<p>Jogador: Julia 05</p>
+<h2>Cyber Games FC | Julia 05</h2>
 
-<canvas id="campo" width="300" height="500"></canvas>
+<div id="campo">
+  <div id="gol"></div>
+
+  <div id="goleiro" class="goleiro"></div>
+
+  <div id="zagueiro" class="zagueiro">
+    <div class="nome">Palasque</div>
+  </div>
+
+  <div id="bola" class="bola"></div>
+
+  <div id="jogador" class="jogador">
+    <div class="nome">Julia 05</div>
+  </div>
+</div>
 
 <br>
-<button onclick="mover('esq')">⬅️</button>
-<button onclick="mover('dir')">➡️</button>
-<br>
-<button onclick="chutar()">🥅 CHUTAR</button>
+
+<button onclick="cima()">⬆️</button><br>
+<button onclick="esq()">⬅️</button>
+<button onclick="dir()">➡️</button><br>
+<button onclick="baixo()">⬇️</button><br><br>
+
+<button onclick="driblar()">🌀 DRIBLE</button>
+<button onclick="chutar()">⚽ CHUTAR</button>
 
 <script>
-const canvas = document.getElementById("campo");
-const ctx = canvas.getContext("2d");
+const jogador = document.getElementById("jogador");
+const bola = document.getElementById("bola");
+const zagueiroEl = document.getElementById("zagueiro");
+const goleiroEl = document.getElementById("goleiro");
 
-// jogador
-let j = { x: 150, y: 420, r: 10 };
+let j = { x: 146, y: 380 };
+let b = { x: 153, y: 360 };
 
-// bola
-let b = { x: 150, y: 400, r: 6 };
+let z = { x: 120, y: 230, dir: 1 };
+let g = { x: 120, dir: 1 };
 
-// goleiro
-let goleiro = {
-  x: 110,
-  y: 40,
-  w: 80,
-  h: 10,
-  dir: 1
-};
+function atualizar() {
+  jogador.style.left = j.x + "px";
+  jogador.style.top = j.y + "px";
 
-// zagueiro
-let zagueiro = {
-  x: 150,
-  y: 260,
-  r: 10,
-  dir: 1
-};
+  bola.style.left = b.x + "px";
+  bola.style.top = b.y + "px";
 
-// mover jogador
-function mover(d) {
-  if (d === "esq" && j.x > 20) j.x -= 20;
-  if (d === "dir" && j.x < 280) j.x += 20;
-  b.x = j.x;
+  zagueiroEl.style.left = z.x + "px";
+  zagueiroEl.style.top = z.y + "px";
+
+  goleiroEl.style.left = g.x + "px";
+  goleiroEl.style.top = "15px";
+
+  colisaoZagueiro();
+}
+
+function cima()  { j.y -= 10; b.y -= 10; atualizar(); }
+function baixo() { j.y += 10; b.y += 10; atualizar(); }
+function esq()   { j.x -= 10; b.x -= 10; atualizar(); }
+function dir()   { j.x += 10; b.x += 10; atualizar(); }
+
+function driblar() {
+  j.x += 30;
   atualizar();
 }
 
-// chute
+/* CHUTE COM DEFESA REAL */
 function chutar() {
-  let intervalo = setInterval(() => {
-    b.y -= 15;
-
-    // gol
-    if (b.y < 55 && b.x > goleiro.x && b.x < goleiro.x + goleiro.w) {
-      alert("⚽ GOOOOL!!!");
-      resetar();
-      clearInterval(intervalo);
-    }
-
-    // defesa goleiro
-    if (
-      b.y < 60 &&
-      b.x > goleiro.x &&
-      b.x < goleiro.x + goleiro.w
-    ) {
-      alert("🧤 Defesa do goleiro Chico!");
-      resetar();
-      clearInterval(intervalo);
-    }
-
+  let chute = setInterval(() => {
+    b.y -= 12;
     atualizar();
-  }, 50);
+
+    // 🧤 DEFESA REAL DO GOLEIRO (REBOTE)
+    if (
+      b.y <= 35 &&
+      b.x >= g.x &&
+      b.x <= g.x + 35
+    ) {
+      clearInterval(chute);
+
+      let rebote = setInterval(() => {
+        b.y += 10;
+        atualizar();
+        if (b.y >= j.y - 10) clearInterval(rebote);
+      }, 40);
+
+      return;
+    }
+
+    // ⚽ GOL
+    if (b.y <= 5) {
+      clearInterval(chute);
+      alert("⚽ GOOOOOL!!!");
+      resetar();
+    }
+
+  }, 40);
 }
 
-// resetar
 function resetar() {
-  j.x = 150;
-  j.y = 420;
-  b.x =
+  j = { x: 146, y: 380 };
+  b = { x: 153, y: 360 };
+  atualizar();
+}
+
+/* COLISÃO DO ZAGUEIRO */
+function colisaoZagueiro() {
+  let dx = j.x - z.x;
+  let dy = j.y - z.y;
+  let dist = Math.sqrt(dx*dx + dy*dy);
+
+  if (dist < 25) {
+    alert("🧱 Palasque desarmou!");
+    resetar();
+  }
+}
+
+/* ZAGUEIRO SE MEXENDO */
+setInterval(() => {
+  z.x += z.dir * 6;
+  if (z.x < 80 || z.x > 210) z.dir *= -1;
+  atualizar();
+}, 300);
+
+/* GOLEIRO SE MEXENDO */
+setInterval(() => {
+  g.x += g.dir * 8;
+  if (g.x < 90 || g.x > 195) g.dir *= -1;
+  atualizar();
+}, 250);
+
+atualizar();
+</script>
+
+</body>
+</html>
