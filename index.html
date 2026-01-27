@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -13,31 +14,25 @@ body {
   text-align: center;
 }
 
-#menu {
-  padding-top: 40px;
-}
+#menu { padding-top: 30px; }
 
 button {
-  padding: 12px 20px;
+  padding: 10px 18px;
   margin: 6px;
-  font-size: 16px;
+  font-size: 15px;
   border: none;
   border-radius: 8px;
-  cursor: pointer;
 }
 
-#game {
-  display: none;
-}
+#game { display: none; }
 
 #campo {
   position: relative;
   width: 300px;
   height: 480px;
-  margin: 10px auto;
+  margin: auto;
   background: #1e7f3f;
   border: 4px solid white;
-  border-radius: 10px;
 }
 
 .gol {
@@ -49,187 +44,162 @@ button {
   border: 3px solid white;
 }
 
-.jogador, .zagueiro, .goleiro, .bola {
-  position: absolute;
-  border-radius: 50%;
-  text-align: center;
-  font-size: 10px;
-  color: white;
+.jogador,.zagueiro,.goleiro,.bola{
+  position:absolute;
+  border-radius:50%;
+  font-size:10px;
+  text-align:center;
 }
 
-.jogador {
-  width: 26px;
-  height: 26px;
-}
-
-.zagueiro {
-  width: 26px;
-  height: 26px;
-  background: #aa0000;
-}
-
-.goleiro {
-  width: 30px;
-  height: 30px;
-  background: black;
-}
-
-.bola {
-  width: 12px;
-  height: 12px;
-  background: white;
-}
-
-#controles {
-  margin-top: 10px;
-}
+.jogador{width:26px;height:26px;color:white;}
+.zagueiro{width:26px;height:26px;background:#aa0000;}
+.goleiro{width:30px;height:30px;background:black;}
+.bola{width:12px;height:12px;background:white;}
 </style>
 </head>
 
 <body>
 
 <div id="menu">
-  <h2>⚽ Escolha seu time</h2>
-  <button onclick="startGame('Fantasma FC', '#6a0dad',
-    [{nome:'JP',num:11},{nome:'Ninho',num:9}])">Fantasma FC</button>
-
-  <button onclick="startGame('Raios de Gelo', '#00bfff',
-    [{nome:'MF',num:9},{nome:'Pedro',num:10}])">Raios de Gelo</button>
-
-  <button onclick="startGame('Gamers Dores', '#00ff99',
-    [{nome:'Sancha',num:9},{nome:'Dores',num:10}])">Gamers Dores</button>
-
-  <button onclick="startGame('Praia do Dragão', '#ff3333',
-    [{nome:'Julia',num:5},{nome:'Vanessa',num:10}])">Praia do Dragão</button>
+<h3>Escolha o time</h3>
+<button onclick="startGame('Fantasma FC','#6a0dad',[{n:'JP',num:11},{n:'Ninho',num:9}])">Fantasma FC</button>
+<button onclick="startGame('Raios de Gelo','#00bfff',[{n:'MF',num:9},{n:'Pedro',num:10}])">Raios de Gelo</button>
+<button onclick="startGame('Gamers Dores','#00ff99',[{n:'Sancha',num:9},{n:'Dores',num:10}])">Gamers Dores</button>
+<button onclick="startGame('Praia do Dragão','#ff3333',[{n:'Julia',num:5},{n:'Vanessa',num:10}])">Praia do Dragão</button>
 </div>
 
 <div id="game">
-  <h3 id="titulo"></h3>
+<h3 id="titulo"></h3>
 
-  <div id="campo">
-    <div class="gol"></div>
+<div id="campo">
+<div class="gol"></div>
 
-    <div id="j1" class="jogador"></div>
-    <div id="j2" class="jogador"></div>
+<div id="j1" class="jogador"></div>
+<div id="j2" class="jogador"></div>
 
-    <div id="z1" class="zagueiro"></div>
-    <div id="z2" class="zagueiro"></div>
+<div id="z1" class="zagueiro"></div>
+<div id="z2" class="zagueiro"></div>
 
-    <div id="gk" class="goleiro"></div>
-    <div id="bola" class="bola"></div>
-  </div>
+<div id="gk" class="goleiro"></div>
+<div id="bola" class="bola"></div>
+</div>
 
-  <div id="controles">
-    <button onclick="mover(-10,0)">⬅️</button>
-    <button onclick="mover(10,0)">➡️</button>
-    <button onclick="mover(0,-10)">⬆️</button>
-    <button onclick="mover(0,10)">⬇️</button><br>
-    <button onclick="passar()">🔁 Passe</button>
-    <button onclick="chutar()">🥅 Chute</button>
-  </div>
+<div>
+<button onclick="move(-10,0)">⬅️</button>
+<button onclick="move(10,0)">➡️</button>
+<button onclick="move(0,-10)">⬆️</button>
+<button onclick="move(0,10)">⬇️</button><br>
+<button onclick="passar()">🔁 Passe</button>
+<button onclick="chutar()">🥅 Chute</button>
+</div>
 </div>
 
 <script>
-let jogadorAtual = 1;
-let posse = true;
+let atual=1, posse=true;
 
-const j1 = {x:130,y:380};
-const j2 = {x:170,y:380};
-const bola = {x:150,y:360};
+const j1={x:120,y:380};
+const j2={x:180,y:380};
+const bola={x:150,y:360};
 
-const z1 = {x:100,y:200};
-const z2 = {x:200,y:200};
-const gk = {x:135,y:20};
+const z1={x:80,y:200};
+const z2={x:220,y:200};
+const gk={x:135,y:20};
 
-function startGame(nome, cor, jogadores){
-  document.getElementById('menu').style.display='none';
-  document.getElementById('game').style.display='block';
-  document.getElementById('titulo').innerText = nome;
+function startGame(nome,cor,js){
+menu.style.display='none';
+game.style.display='block';
+titulo.innerText=nome;
 
-  ['j1','j2'].forEach((id,i)=>{
-    const el=document.getElementById(id);
-    el.style.background=cor;
-    el.innerHTML=jogadores[i].nome+"<br>"+jogadores[i].num;
-  });
-
-  atualizar();
-  setInterval(moverZagueiros,500);
-  setInterval(moverGoleiro,400);
+['j1','j2'].forEach((id,i)=>{
+let e=document.getElementById(id);
+e.style.background=cor;
+e.innerHTML=js[i].n+"<br>"+js[i].num;
+});
+update();
+setInterval(moveZagueiros,80);
+setInterval(moveGoleiro,60);
 }
 
-function atualizar(){
-  pos('j1',j1);
-  pos('j2',j2);
-  pos('bola',bola);
-  pos('z1',z1);
-  pos('z2',z2);
-  pos('gk',gk);
+function update(){
+pos(j1,'j1');pos(j2,'j2');pos(bola,'bola');
+pos(z1,'z1');pos(z2,'z2');pos(gk,'gk');
 }
 
-function pos(id,o){
-  const e=document.getElementById(id);
-  e.style.left=o.x+'px';
-  e.style.top=o.y+'px';
+function pos(o,id){
+let e=document.getElementById(id);
+e.style.left=o.x+'px';
+e.style.top=o.y+'px';
 }
 
-function mover(dx,dy){
-  if(!posse) return;
-  const j = jogadorAtual===1?j1:j2;
-  j.x+=dx; j.y+=dy;
-  bola.x=j.x+7; bola.y=j.y-12;
-  checarColisao();
-  atualizar();
+function move(dx,dy){
+if(!posse)return;
+let j=atual===1?j1:j2;
+j.x+=dx;j.y+=dy;
+bola.x=j.x+7;bola.y=j.y-12;
+check();
+update();
 }
 
 function passar(){
-  jogadorAtual = jogadorAtual===1?2:1;
+if(!posse)return;
+let alvo=atual===1?j2:j1;
+let i=setInterval(()=>{
+bola.x+=(alvo.x-bola.x)/5;
+bola.y+=(alvo.y-12-bola.y)/5;
+if(Math.abs(bola.x-alvo.x)<3){
+atual=atual===1?2:1;
+clearInterval(i);
+}
+update();
+},30);
 }
 
 function chutar(){
-  let i=setInterval(()=>{
-    bola.y-=10;
-    if(colide(bola,gk)){
-      posse=false;
-      clearInterval(i);
-      setTimeout(reset,800);
-    }
-    if(bola.y<40){
-      alert("⚽ GOOOOL!");
-      clearInterval(i);
-      reset();
-    }
-    atualizar();
-  },40);
+let i=setInterval(()=>{
+bola.y-=12;
+if(colide(bola,gk)){
+posse=false;
+clearInterval(i);
+setTimeout(reset,800);
+}
+if(bola.y<40){
+alert("⚽ GOOOOL!");
+clearInterval(i);
+reset();
+}
+update();
+},30);
 }
 
-function moverZagueiros(){
-  [z1,z2].forEach(z=>{
-    z.x += Math.random()>0.5?10:-10;
-    checarColisao();
-  });
+function moveZagueiros(){
+[z1,z2].forEach(z=>{
+z.x+=(bola.x-z.x)/15;
+z.y+=(bola.y-z.y)/15;
+});
+check();
 }
 
-function moverGoleiro(){
-  gk.x += Math.random()>0.5?10:-10;
+function moveGoleiro(){
+gk.x+=(bola.x-gk.x)/6;
 }
 
 function colide(a,b){
-  return Math.abs(a.x-b.x)<20 && Math.abs(a.y-b.y)<20;
+return Math.abs(a.x-b.x)<18&&Math.abs(a.y-b.y)<18;
 }
 
-function checarColisao(){
-  if(colide(bola,z1)||colide(bola,z2)){
-    posse=false;
-    setTimeout(reset,800);
-  }
+function check(){
+if(colide(bola,z1)||colide(bola,z2)){
+posse=false;
+setTimeout(reset,700);
+}
 }
 
 function reset(){
-  j1.x=130;j1.y=380;
-  j2.x=170;j2.y=380;
-  bola.x=150;bola.y=360;
-  posse=true;
-  atualizar();
+j1.x=120;j1.y=380;
+j2.x=180;j2.y=380;
+bola.x=150;bola.y=360;
+posse=true;
+update();
 }
 </script>
 
