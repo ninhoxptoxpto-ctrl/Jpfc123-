@@ -112,4 +112,169 @@ button{
 
 <br>
 
-<button onclick="cima()">⬆
+<button onclick="cima()">⬆️</button><br>
+<button onclick="esq()">⬅️</button>
+<button onclick="dir()">➡️</button><br>
+<button onclick="baixo()">⬇️</button><br><br>
+
+<button onclick="drible()">🌀 DRIBLE</button>
+<button onclick="passe()">🤝 PASSE</button>
+<button onclick="chutar()">⚽ CHUTAR</button>
+
+<br><br>
+
+<button onclick="proximaRodada()">🏆 PRÓXIMA RODADA</button>
+<button onclick="mostrarTabela()">📊 TABELA</button>
+
+<script>
+/* ===== JOGO ===== */
+const jogador=document.getElementById("jogador");
+const j2=document.getElementById("j2");
+const bola=document.getElementById("bola");
+const zEl=document.getElementById("zagueiro");
+const gEl=document.getElementById("goleiro");
+
+let gols=0,defesas=0;
+let comBola=1;
+
+let j={x:150,y:380};
+let jB={x:220,y:360};
+let b={x:160,y:390};
+let z={x:100,y:240,dir:1};
+let g={x:120,dir:1};
+
+function atualizar(){
+ jogador.style.left=j.x+"px";
+ jogador.style.top=j.y+"px";
+ j2.style.left=jB.x+"px";
+ j2.style.top=jB.y+"px";
+ bola.style.left=b.x+"px";
+ bola.style.top=b.y+"px";
+ zEl.style.left=z.x+"px";
+ zEl.style.top=z.y+"px";
+ gEl.style.left=g.x+"px";
+ gEl.style.top="15px";
+}
+
+function syncBola(){
+ if(comBola===1){b.x=j.x+7;b.y=j.y+10;}
+ else{b.x=jB.x+7;b.y=jB.y+10;}
+ atualizar();
+}
+
+function cima(){if(comBola===1)j.y-=10;else jB.y-=10;syncBola();}
+function baixo(){if(comBola===1)j.y+=10;else jB.y+=10;syncBola();}
+function esq(){if(comBola===1)j.x-=10;else jB.x-=10;syncBola();}
+function dir(){if(comBola===1)j.x+=10;else jB.x+=10;syncBola();}
+
+function drible(){ if(comBola===1)j.x+=25; else jB.x+=25; syncBola(); }
+
+function passe(){
+ let destino = comBola===1 ? jB : j;
+ let passos=20;
+ let dx=(destino.x+7-b.x)/passos;
+ let dy=(destino.y+10-b.y)/passos;
+ let i=0;
+
+ let anim=setInterval(()=>{
+   b.x+=dx;
+   b.y+=dy;
+   atualizar();
+   i++;
+   if(i>=passos){
+     clearInterval(anim);
+     comBola = comBola===1 ? 2 : 1;
+     syncBola();
+   }
+ },30);
+}
+
+function chutar(){
+ let chute=setInterval(()=>{
+   b.y-=12;
+   atualizar();
+
+   if(b.y<=35 && b.x>=g.x && b.x<=g.x+40){
+     clearInterval(chute);
+     defesas++;
+     document.getElementById("defesas").innerText=defesas;
+     resetar();
+   }
+
+   if(b.y<=5){
+     clearInterval(chute);
+     gols++;
+     document.getElementById("gols").innerText=gols;
+     resetar();
+   }
+ },40);
+}
+
+function resetar(){
+ j={x:150,y:380};
+ jB={x:220,y:360};
+ comBola=1;
+ syncBola();
+}
+
+setInterval(()=>{
+ z.x+=z.dir*6;
+ if(z.x<60||z.x>230)z.dir*=-1;
+ atualizar();
+},300);
+
+setInterval(()=>{
+ g.x+=g.dir*8;
+ if(g.x<90||g.x>200)g.dir*=-1;
+ atualizar();
+},250);
+
+syncBola();
+
+/* ===== CAMPEONATO ===== */
+let rodada=1;
+
+let times=[
+ {nome:"Raios de Gelo",pontos:0,gols:0},
+ {nome:"Fantasma",pontos:0,gols:0},
+ {nome:"Gamers Dores",pontos:0,gols:0},
+ {nome:"Praia do Dragão",pontos:0,gols:0}
+];
+
+function simularJogo(t1,t2){
+ let g1=Math.floor(Math.random()*4);
+ let g2=Math.floor(Math.random()*4);
+ t1.gols+=g1; t2.gols+=g2;
+ if(g1>g2)t1.pontos+=3;
+ else if(g2>g1)t2.pontos+=3;
+ else{t1.pontos++;t2.pontos++;}
+ return `${t1.nome} ${g1} x ${g2} ${t2.nome}`;
+}
+
+function proximaRodada(){
+ if(rodada>3){
+   mostrarTabela(true);
+   alert("🏆 CAMPEONATO ENCERRADO!");
+   return;
+ }
+ let res="";
+ if(rodada===1) res=simularJogo(times[1],times[2]);
+ if(rodada===2) res=simularJogo(times[1],times[3]);
+ if(rodada===3) res=simularJogo(times[2],times[3]);
+ rodada++;
+ alert("Resultado IA:\n"+res);
+ mostrarTabela();
+}
+
+function mostrarTabela(final=false){
+ let txt=final?"🏆 TABELA FINAL\n\n":"📊 TABELA\n\n";
+ times.sort((a,b)=>b.pontos-a.pontos||b.gols-a.gols)
+ .forEach((t,i)=>{
+   txt+=`${i+1}º ${t.nome} - ${t.pontos} pts (${t.gols} gols)\n`;
+ });
+ alert(txt);
+}
+</script>
+
+</body>
+</html>
