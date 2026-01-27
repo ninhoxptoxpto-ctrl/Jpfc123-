@@ -9,58 +9,62 @@
     body {
       margin: 0;
       background: #0b6623;
-      font-family: Arial, sans-serif;
       color: white;
-      overflow: hidden;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 40px;
+    }
+
+    #startScreen {
+      display: block;
+    }
+
+    button {
+      padding: 15px 30px;
+      font-size: 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      background: #ffd700;
     }
 
     canvas {
+      display: none;
       background: #1e8f3a;
       border: 4px solid white;
       border-radius: 12px;
-      display: none;
-      margin: auto;
+      margin: 20px auto;
     }
+  </style>
+</head>
 
-    .hud {
-      position: absolute;
-      top: 10px;
-      width: 100%;
-      text-align: center;
-      font-size: 18px;
-      font-weight: bold;
-      display: none;
+<body>
+
+  <div id="startScreen">
+    <h1>⚽ Mini Futebol JP</h1>
+    <button id="startBtn">ENTRAR NO JOGO</button>
+  </div>
+
+  <canvas id="game" width="300" height="400"></canvas>
+
+  <script>
+    const startBtn = document.getElementById("startBtn");
+    const startScreen = document.getElementById("startScreen");
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    startBtn.onclick = () => {
+      startScreen.style.display = "none";
+      canvas.style.display = "block";
+      desenhar();
+    };
+
+    function desenhar() {
+      ctx.fillStyle = "white";
+      ctx.font = "20px Arial";
+      ctx.fillText("🏟️ Jogo carregado!", 70, 200);
     }
+  </script>
 
-    .controls {
-      position: absolute;
-      bottom: 10px;
-      width: 100%;
-      display: none;
-      justify-content: space-between;
-      padding: 0 20px;
-      box-sizing: border-box;
-    }
-
-    .move button, .shoot {
-      font-size: 20px;
-      padding: 12px;
-      margin: 4px;
-      border: none;
-      border-radius: 10px;
-    }
-
-    .shoot {
-      background: orange;
-      font-weight: bold;
-    }
-
-    .start {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: #0b6623;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+</body>
+</html>
