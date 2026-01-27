@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <title>Mini Futebol JP</title>
@@ -8,173 +8,177 @@
 body {
   margin: 0;
   background: #0b6623;
-  color: white;
   font-family: Arial, sans-serif;
+  color: white;
   text-align: center;
 }
 
-#menu {
-  padding-top: 40px;
+h2 {
+  margin: 10px 0;
 }
 
-button {
-  padding: 15px 25px;
-  font-size: 18px;
-  margin: 10px;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-}
-
-#game {
-  display: none;
-  background: #1e7f3f;
+#campo {
+  position: relative;
+  width: 320px;
+  height: 520px;
   margin: auto;
+  background: #1e7f3f;
   border: 5px solid white;
 }
 
-.hud {
-  display: none;
-  font-size: 22px;
-  padding: 10px;
+.linha {
+  position: absolute;
+  border: 2px solid white;
+}
+
+#gol {
+  top: 0;
+  left: 90px;
+  width: 140px;
+  height: 40px;
+}
+
+#bola {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+}
+
+.jogador {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #00ff88;
+}
+
+.nome {
+  position: absolute;
+  top: 28px;
+  font-size: 10px;
+  width: 60px;
+  left: -17px;
+}
+
+#goleiro {
+  background: black;
+}
+
+#zagueiro {
+  background: red;
+}
+
+#controles {
+  margin-top: 10px;
+}
+
+button {
+  padding: 10px 15px;
+  font-size: 16px;
+  margin: 4px;
+  border-radius: 8px;
+  border: none;
 }
 </style>
 </head>
 
 <body>
 
-<div id="menu">
-  <h1>⚽ Mini Futebol JP</h1>
-  <h2>Escolha seu time</h2>
+<h2>Cyber Games FC | Jogador: Julia 05</h2>
 
-  <button onclick="selecionarTime('Espectro JP FC', 'JP 11', '#5a189a')">👻 Espectro JP FC</button><br>
-  <button onclick="selecionarTime('Tempestade de Gelo FC', 'MF 09', '#00b4d8')">❄️ Tempestade de Gelo FC</button><br>
-  <button onclick="selecionarTime('Cyber Games FC', 'Julia 05', '#00ff88')">🎮 Cyber Games FC</button><br>
-  <button onclick="selecionarTime('Dragão do Mar FC', 'Ninho 10', '#d00000')">🐉 Dragão do Mar FC</button><br><br>
+<div id="campo">
+  <div id="gol" class="linha"></div>
 
-  <button onclick="iniciarJogo()">▶️ JOGAR</button>
+  <div id="bola"></div>
+
+  <div id="jogador" class="jogador">
+    <div class="nome">Julia 05</div>
+  </div>
+
+  <div id="zagueiro" class="jogador">
+    <div class="nome">Palasque</div>
+  </div>
+
+  <div id="goleiro" class="jogador">
+    <div class="nome">Chico</div>
+  </div>
 </div>
 
-<div class="hud" id="hud"></div>
-
-<canvas id="game" width="360" height="520"></canvas>
+<div id="controles">
+  <button onclick="mover(0,-15)">⬆️</button><br>
+  <button onclick="mover(-15,0)">⬅️</button>
+  <button onclick="drible()">✨ DRIBLE</button>
+  <button onclick="mover(15,0)">➡️</button><br>
+  <button onclick="mover(0,15)">⬇️</button><br><br>
+  <button onclick="chutar()">⚽ CHUTAR</button>
+</div>
 
 <script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-const hud = document.getElementById("hud");
+const jogador = document.getElementById("jogador");
+const bola = document.getElementById("bola");
+const zagueiro = document.getElementById("zagueiro");
+const goleiro = document.getElementById("goleiro");
 
-let time = "";
-let jogador = "";
-let corTime = "";
+let j = { x: 150, y: 420 };
+let b = { x: 150, y: 410 };
+let z = { x: 150, y: 250 };
+let g = { x: 150, y: 30 };
 
-let bola = { x: 180, y: 300, r: 8 };
-let jogadorPos = { x: 180, y: 420 };
-let goleiro = { x: 140, y: 60, w: 80, h: 15 };
+function atualizar() {
+  jogador.style.left = j.x + "px";
+  jogador.style.top = j.y + "px";
 
-let velocidadeBola = { x: 0, y: 0 };
+  bola.style.left = b.x + "px";
+  bola.style.top = b.y + "px";
 
-function selecionarTime(t, j, c) {
-  time = t;
-  jogador = j;
-  corTime = c;
+  zagueiro.style.left = z.x + "px";
+  zagueiro.style.top = z.y + "px";
+
+  goleiro.style.left = g.x + "px";
+  goleiro.style.top = g.y + "px";
 }
 
-function iniciarJogo() {
-  if (!time) {
-    alert("Escolha um time!");
-    return;
-  }
-
-  document.getElementById("menu").style.display = "none";
-  canvas.style.display = "block";
-  hud.style.display = "block";
-  hud.innerText = time + " | Jogador: " + jogador;
-
-  loop();
+function mover(dx, dy) {
+  j.x += dx;
+  j.y += dy;
+  b.x = j.x + 7;
+  b.y = j.y - 10;
+  atualizar();
 }
 
-function desenharCampo() {
-  ctx.fillStyle = "#1e7f3f";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = 4;
-  ctx.strokeRect(10, 10, 340, 500);
-
-  // Gol
-  ctx.strokeRect(110, 10, 140, 60);
+function drible() {
+  j.x += 40;
+  setTimeout(() => {
+    j.x -= 40;
+    atualizar();
+  }, 200);
+  atualizar();
 }
 
-function desenharJogador() {
-  ctx.fillStyle = corTime;
-  ctx.beginPath();
-  ctx.arc(jogadorPos.x, jogadorPos.y, 14, 0, Math.PI * 2);
-  ctx.fill();
+function chutar() {
+  let intervalo = setInterval(() => {
+    b.y -= 15;
+    atualizar();
 
-  ctx.fillStyle = "white";
-  ctx.font = "12px Arial";
-  ctx.fillText(jogador, jogadorPos.x - 22, jogadorPos.y + 30);
-}
-
-function desenharBola() {
-  ctx.fillStyle = "white";
-  ctx.beginPath();
-  ctx.arc(bola.x, bola.y, bola.r, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function desenharGoleiro() {
-  ctx.fillStyle = "black";
-  ctx.fillRect(goleiro.x, goleiro.y, goleiro.w, goleiro.h);
-
-  goleiro.x += Math.sin(Date.now() / 300) * 1.5;
-}
-
-function atualizarBola() {
-  bola.x += velocidadeBola.x;
-  bola.y += velocidadeBola.y;
-
-  // Gol
-  if (bola.y < 60 && bola.x > 110 && bola.x < 250) {
-    alert("⚽ GOOOL!");
-    resetar();
-  }
-
-  // Fora
-  if (bola.y < 0 || bola.y > canvas.height) {
-    resetar();
-  }
+    if (b.y < 40) {
+      alert("⚽ GOOOOOL!!!");
+      resetar();
+      clearInterval(intervalo);
+    }
+  }, 50);
 }
 
 function resetar() {
-  bola.x = 180;
-  bola.y = 300;
-  velocidadeBola.x = 0;
-  velocidadeBola.y = 0;
+  j.x = 150;
+  j.y = 420;
+  b.x = 150;
+  b.y = 410;
+  atualizar();
 }
 
-function loop() {
-  desenharCampo();
-  desenharGoleiro();
-  desenharBola();
-  desenharJogador();
-  atualizarBola();
-
-  requestAnimationFrame(loop);
-}
-
-// CONTROLES
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowLeft") jogadorPos.x -= 10;
-  if (e.key === "ArrowRight") jogadorPos.x += 10;
-
-  // Chutar
-  if (e.key === " ") {
-    velocidadeBola.y = -6;
-    velocidadeBola.x = (Math.random() - 0.5) * 3;
-  }
-});
+atualizar();
 </script>
 
 </body>
