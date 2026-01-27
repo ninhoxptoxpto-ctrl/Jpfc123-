@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -14,13 +14,9 @@ body {
   text-align: center;
 }
 
-#menu {
-  padding: 20px;
-}
-
 button {
-  padding: 12px 20px;
-  margin: 6px;
+  padding: 10px 16px;
+  margin: 4px;
   font-size: 16px;
   border-radius: 8px;
   border: none;
@@ -34,8 +30,12 @@ canvas {
   margin: auto;
 }
 
+#menu {
+  padding: 20px;
+}
+
 .hud {
-  font-size: 18px;
+  font-size: 16px;
   margin: 10px;
 }
 </style>
@@ -45,28 +45,32 @@ canvas {
 
 <div id="menu">
   <h1>⚽ Mini Futebol JP</h1>
-
   <p>Escolha seu time:</p>
-  <button onclick="escolherTime('Brasil JP 10', 3)">🇧🇷 Brasil JP 10</button>
-  <button onclick="escolherTime('Argentina MF 09', 4)">🇦🇷 Argentina MF 09</button>
-  <button onclick="escolherTime('Alemanha Julia', 2)">🇩🇪 Alemanha Julia</button>
-  <button onclick="escolherTime('França Ninho 08', 5)">🇫🇷 França Ninho 08</button>
+
+  <button onclick="selecionar('Brasil JP',10,3)">🇧🇷 Brasil JP 10</button>
+  <button onclick="selecionar('Argentina MF',9,4)">🇦🇷 Argentina MF 09</button>
+  <button onclick="selecionar('Alemanha Julia',11,2)">🇩🇪 Alemanha Julia</button>
+  <button onclick="selecionar('França Ninho',8,5)">🇫🇷 França Ninho 08</button>
 
   <br><br>
-  <button onclick="iniciar()">▶️ ENTRAR NO JOGO</button>
+  <button onclick="iniciar()">▶️ JOGAR</button>
 </div>
 
 <div class="hud" id="hud" style="display:none">
   Time: <span id="time"></span> |
-  Jogador | Zagueiro: Palasque | Goleiro: Chico |
+  Jogador: <span id="camisa"></span> |
+  Zagueiro: Palasque |
+  Goleiro: Chico |
   Gols: <span id="gols">0</span>
 </div>
 
-<canvas id="game" width="300" height="420"></canvas>
+<canvas id="game" width="320" height="420"></canvas>
 
 <div id="controles" style="display:none">
-  <button onclick="mover(-10)">⬅️</button>
-  <button onclick="mover(10)">➡️</button>
+  <button onclick="mover(-12)">⬅️</button>
+  <button onclick="drible()">🌀 DRIBLE</button>
+  <button onclick="mover(12)">➡️</button>
+  <br>
   <button onclick="chutar()">⚽ CHUTAR</button>
 </div>
 
@@ -76,22 +80,27 @@ const ctx = canvas.getContext("2d");
 
 let gols = 0;
 let forca = 3;
+let nomeTime = "Brasil JP";
+let numero = 10;
 
-let bola = { x: 150, y: 300, r: 8, vx: 0, vy: 0 };
-let jogador = { x: 150, y: 330 };
-let zagueiro = { x: 150, y: 220, dir: 1 };
-let goleiro = { x: 150, y: 30, dir: 1 };
+let jogador = { x:160, y:330 };
+let bola = { x:160, y:315, vy:0 };
+let zagueiro = { x:160, y:220, dir:1 };
+let goleiro = { x:160, dir:1 };
 
-function escolherTime(nome, f) {
-  document.getElementById("time").innerText = nome;
+function selecionar(time,num,f) {
+  nomeTime = time;
+  numero = num;
   forca = f;
+  document.getElementById("time").innerText = time;
+  document.getElementById("camisa").innerText = time.split(" ")[0] + " " + num;
 }
 
 function iniciar() {
-  document.getElementById("menu").style.display = "none";
-  canvas.style.display = "block";
-  document.getElementById("hud").style.display = "block";
-  document.getElementById("controles").style.display = "block";
+  document.getElementById("menu").style.display="none";
+  document.getElementById("hud").style.display="block";
+  document.getElementById("controles").style.display="block";
+  canvas.style.display="block";
   loop();
 }
 
@@ -100,75 +109,14 @@ function mover(dx) {
   bola.x = jogador.x;
 }
 
+function drible() {
+  jogador.x += zagueiro.dir * 25;
+  bola.x = jogador.x;
+}
+
 function chutar() {
-  bola.vy = -forca * 2;
+  bola.vy = -forca * 2.2;
 }
 
 function loop() {
-  ctx.clearRect(0,0,300,420);
-
-  // campo
-  ctx.strokeStyle = "white";
-  ctx.strokeRect(10,10,280,400);
-
-  // gol
-  ctx.strokeRect(110,10,80,20);
-
-  // jogador
-  ctx.fillStyle = "blue";
-  ctx.beginPath();
-  ctx.arc(jogador.x, jogador.y, 10, 0, Math.PI*2);
-  ctx.fill();
-
-  // bola
-  ctx.fillStyle = "white";
-  ctx.beginPath();
-  ctx.arc(bola.x, bola.y, bola.r, 0, Math.PI*2);
-  ctx.fill();
-
-  // zagueiro Palasque
-  zagueiro.x += zagueiro.dir * 2;
-  if (zagueiro.x > 240 || zagueiro.x < 60) zagueiro.dir *= -1;
-  ctx.fillStyle = "red";
-  ctx.fillRect(zagueiro.x-15, zagueiro.y, 30, 8);
-
-  // goleiro Chico
-  goleiro.x += goleiro.dir * 2;
-  if (goleiro.x > 210 || goleiro.x < 90) goleiro.dir *= -1;
-  ctx.fillStyle = "yellow";
-  ctx.fillRect(goleiro.x-25, 30, 50, 8);
-
-  // movimento bola
-  bola.y += bola.vy;
-  bola.vy *= 0.98;
-
-  // colisão zagueiro
-  if (bola.y < zagueiro.y+8 && bola.x > zagueiro.x-15 && bola.x < zagueiro.x+15) {
-    bola.vy = 3;
-  }
-
-  // defesa goleiro
-  if (bola.y < 38 && bola.x > goleiro.x-25 && bola.x < goleiro.x+25) {
-    bola.vy = 3;
-  }
-
-  // gol
-  if (bola.y < 10 && bola.x > 110 && bola.x < 190) {
-    gols++;
-    document.getElementById("gols").innerText = gols;
-    bola.y = 300;
-    bola.vy = 0;
-  }
-
-  // reset
-  if (bola.y > 420) {
-    bola.y = 300;
-    bola.vy = 0;
-  }
-
-  requestAnimationFrame(loop);
-}
-</script>
-
-</body>
-</html>
+  ctx.clearRect(0
