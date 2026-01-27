@@ -6,31 +6,70 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{margin:0;background:#0b5d2a;font-family:Arial;color:white;text-align:center}
+body{
+  margin:0;
+  background:#0b5d2a;
+  font-family:Arial;
+  color:white;
+  text-align:center;
+}
 #menu{padding:20px}
-select,button{padding:10px;margin:6px;font-size:16px}
+select,button{
+  padding:10px;
+  margin:6px;
+  font-size:15px;
+}
 #campo{
-  width:320px;height:480px;margin:auto;
-  background:#1e7f3f;border:4px solid white;
-  position:relative;display:none
+  width:320px;
+  height:480px;
+  margin:auto;
+  background:#1e7f3f;
+  border:4px solid white;
+  position:relative;
+  display:none;
 }
-.gol{position:absolute;left:100px;width:120px;height:30px;border:3px solid white}
-#golsup{top:0} #golinf{bottom:0}
-.jogador,.zagueiro,.goleiro,.bola{
+.gol{
   position:absolute;
-  display:flex;align-items:center;justify-content:center;
-  font-size:9px;font-weight:bold;color:white;text-align:center
+  left:100px;
+  width:120px;
+  height:30px;
+  border:3px solid white;
 }
-.jogador,.zagueiro{width:26px;height:26px;border-radius:50%}
-.goleiro{width:44px;height:14px;background:black;border-radius:6px}
-.bola{width:12px;height:12px;background:white;border-radius:50%}
+#golsup{top:0}
+#golinf{bottom:0}
+
+.jogador,.zagueiro,.bola{
+  position:absolute;
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:9px;
+  font-weight:bold;
+  color:white;
+}
+.goleiro{
+  position:absolute;
+  width:44px;
+  height:14px;
+  background:black;
+  border-radius:6px;
+}
+.bola{
+  width:12px;
+  height:12px;
+  background:white;
+}
 </style>
 </head>
 
 <body>
 
 <div id="menu">
-  <h3>⚽ Escolha os Times</h3>
+  <h3>⚽ Escolha os times</h3>
+
   <p>Seu time</p>
   <select id="meuTime">
     <option value="#00e676">Fantasma FC</option>
@@ -39,7 +78,7 @@ select,button{padding:10px;margin:6px;font-size:16px}
     <option value="#9c27b0">Gamers</option>
   </select>
 
-  <p>Time adversário</p>
+  <p>Adversário</p>
   <select id="advTime">
     <option value="#e53935">Fantasma FC</option>
     <option value="#1565c0">Raios de Gelo</option>
@@ -70,9 +109,10 @@ select,button{padding:10px;margin:6px;font-size:16px}
 <button onclick="move(0,-10)">⬆️</button><br>
 <button onclick="move(-10,0)">⬅️</button>
 <button onclick="move(10,0)">➡️</button><br>
-<button onclick="move(0,10)">⬇️</button><br>
+<button onclick="move(0,10)">⬇️</button><br><br>
 <button onclick="passe()">🤝 Passe</button>
 <button onclick="chutar()">⚽ Chutar</button>
+<button onclick="desarme()">🛡️ Desarme</button>
 </div>
 
 <script>
@@ -93,14 +133,12 @@ let atual=1;
 let dono="jogador";
 let anim=false;
 
+/* START */
 function start(){
-  const meu=el("meuTime").value;
-  const adv=el("advTime").value;
-
-  el("j1").style.background=meu;
-  el("j2").style.background=meu;
-  el("z1").style.background=adv;
-  el("z2").style.background=adv;
+  el("j1").style.background=el("meuTime").value;
+  el("j2").style.background=el("meuTime").value;
+  el("z1").style.background=el("advTime").value;
+  el("z2").style.background=el("advTime").value;
 
   el("menu").style.display="none";
   el("campo").style.display="block";
@@ -122,6 +160,7 @@ function draw(){
 
 function jogador(){return atual===1?j1:j2}
 
+/* MOVIMENTO */
 function move(dx,dy){
   if(anim||dono!=="jogador")return;
   let j=jogador();
@@ -130,6 +169,7 @@ function move(dx,dy){
   draw();
 }
 
+/* PASSE */
 function passe(){
   if(anim||dono!=="jogador")return;
   anim=true;
@@ -149,27 +189,53 @@ function passe(){
   },30);
 }
 
+/* CHUTE */
 function chutar(){
   if(anim||dono!=="jogador")return;
   anim=true;
+  let curva=(Math.random()*6)-3;
   let it=setInterval(()=>{
     bola.y-=14;
+    bola.x+=curva;
     draw();
     if(colide(bola,gkAdv)){
-      clearInterval(it);reset();
+      if(Math.random()<0.35){
+        clearInterval(it);
+        alert("⚽ GOL!");
+        reset();
+      }else{
+        clearInterval(it);
+        reset();
+      }
     }
     if(bola.y<30){
       clearInterval(it);
-      alert("⚽ GOL SEU!");
+      alert("⚽ GOL!");
       reset();
     }
   },30);
 }
 
-/* IA ADVERSÁRIA — CHUTA SEM FALHAR */
+/* DESARME */
+function desarme(){
+  if(dono!=="adv")return;
+  let j=jogador();
+  [z1,z2].forEach(z=>{
+    if(z.tem && colide(j,z)){
+      if(Math.random()<0.65){
+        z.tem=false;
+        dono="jogador";
+        bola.x=j.x+7;
+        bola.y=j.y-12;
+      }
+    }
+  });
+  draw();
+}
+
+/* IA ADVERSÁRIA */
 setInterval(()=>{
   let alvo=dono==="jogador"?jogador():bola;
-
   [z1,z2].forEach(z=>{
     if(!z.tem){
       z.x+=(alvo.x-z.x)/18;
@@ -181,27 +247,26 @@ setInterval(()=>{
     }else{
       bola.x=z.x+7;
       bola.y=z.y+20;
-      z.y+=2.5;
-      if(z.y>380){
-        chuteAdv();
-      }
+      z.y+=2.4;
+      if(z.y>380) chuteAdv();
     }
   });
-
   draw();
 },80);
 
+/* CHUTE ADVERSÁRIO */
 function chuteAdv(){
   z1.tem=false;z2.tem=false;
   let it=setInterval(()=>{
     bola.y+=14;
     draw();
     if(colide(bola,gkMeu)){
-      clearInterval(it);reset();
+      clearInterval(it);
+      reset();
     }
     if(bola.y>450){
       clearInterval(it);
-      alert("😭 GOL DO ADVERSÁRIO");
+      alert("😭 Gol do adversário");
       reset();
     }
   },30);
@@ -210,25 +275,15 @@ function chuteAdv(){
 /* GOLEIROS */
 setInterval(()=>{
   gkMeu.x+=(bola.x-gkMeu.x)/6;
-  gkAdv.x+=(bola.x-gkAdv.x)/6;
+  gkAdv.x+=(bola.x-gkAdv.x)/14;
   draw();
 },60);
-
-/* ROUBO */
-setInterval(()=>{
-  if(dono==="adv"){
-    let j=jogador();
-    if(colide(j,bola)){
-      dono="jogador";
-      z1.tem=false;z2.tem=false;
-    }
-  }
-},50);
 
 function colide(a,b){
   return Math.abs(a.x-b.x)<18 && Math.abs(a.y-b.y)<18;
 }
 
+/* RESET */
 function reset(){
   j1.x=130;j1.y=360;
   j2.x=190;j2.y=360;
@@ -242,4 +297,4 @@ function reset(){
 </script>
 
 </body>
-  </html>
+</html>
