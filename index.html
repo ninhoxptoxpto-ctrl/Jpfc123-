@@ -3,7 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <title>Jogo de Futebol</title>
+  <style> 
+    <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Jogo de Futebol</title>
+
   <style>
+    body {
+      background: #1e7f3f;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 50px;
+    }
+
+    button {
+      padding: 15px 30px;
+      font-size: 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>⚽ Jogo de Futebol</h1>
+  <p>Clique para chutar</p>
+
+  <button onclick="chutar()">CHUTAR</button>
+
+  <p id="resultado"></p>
+
+  <script>
+    function chutar() {
+      const opcoes = [
+        "⚽ GOOOOOL!",
+        "😬 Na trave!",
+        "🧤 Defesa do goleiro!"
+      ];
+      const sorteio = Math.floor(Math.random() * opcoes.length);
+      document.getElementById("resultado").innerText = opcoes[sorteio];
+    }
+  </script>
+
+</body>
+</html>
     body {
       background: #1e7f3f;
       color: white;
