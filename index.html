@@ -6,39 +6,38 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-  body {
-    margin: 0;
-    background: #0b6623;
-    color: white;
-    font-family: Arial, sans-serif;
-    text-align: center;
-  }
+body {
+  margin: 0;
+  background: #0b6623;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
 
-  #menu {
-    padding-top: 40px;
-  }
+#menu {
+  padding: 20px;
+}
 
-  button {
-    padding: 12px 20px;
-    margin: 8px;
-    font-size: 18px;
-    border-radius: 10px;
-    border: none;
-  }
+button {
+  padding: 12px 20px;
+  margin: 6px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+}
 
-  canvas {
-    display: none;
-    background: #1e7f3f;
-    border: 4px solid white;
-    border-radius: 12px;
-    margin: auto;
-  }
+canvas {
+  background: #1e7f3f;
+  border: 4px solid white;
+  border-radius: 12px;
+  display: none;
+  margin: auto;
+}
 
-  #placar {
-    display: none;
-    font-size: 22px;
-    margin-top: 10px;
-  }
+.hud {
+  font-size: 18px;
+  margin: 10px;
+}
 </style>
 </head>
 
@@ -46,79 +45,130 @@
 
 <div id="menu">
   <h1>⚽ Mini Futebol JP</h1>
+
   <p>Escolha seu time:</p>
-  <button onclick="iniciar('Brasil')">🇧🇷 Brasil</button>
-  <button onclick="iniciar('Argentina')">🇦🇷 Argentina</button>
-  <button onclick="iniciar('França')">🇫🇷 França</button>
-  <button onclick="iniciar('Alemanha')">🇩🇪 Alemanha</button>
+  <button onclick="escolherTime('Brasil JP 10', 3)">🇧🇷 Brasil JP 10</button>
+  <button onclick="escolherTime('Argentina MF 09', 4)">🇦🇷 Argentina MF 09</button>
+  <button onclick="escolherTime('Alemanha Julia', 2)">🇩🇪 Alemanha Julia</button>
+  <button onclick="escolherTime('França Ninho 08', 5)">🇫🇷 França Ninho 08</button>
+
+  <br><br>
+  <button onclick="iniciar()">▶️ ENTRAR NO JOGO</button>
 </div>
 
-<div id="placar">Gols: <span id="gols">0</span></div>
+<div class="hud" id="hud" style="display:none">
+  Time: <span id="time"></span> |
+  Jogador | Zagueiro: Palasque | Goleiro: Chico |
+  Gols: <span id="gols">0</span>
+</div>
 
-<canvas id="game" width="300" height="400"></canvas>
+<canvas id="game" width="300" height="420"></canvas>
+
+<div id="controles" style="display:none">
+  <button onclick="mover(-10)">⬅️</button>
+  <button onclick="mover(10)">➡️</button>
+  <button onclick="chutar()">⚽ CHUTAR</button>
+</div>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-const menu = document.getElementById("menu");
-const placar = document.getElementById("placar");
-const golsTxt = document.getElementById("gols");
 
-let bola = { x: 150, y: 200, r: 10, vx: 2, vy: 2 };
 let gols = 0;
+let forca = 3;
 
-function iniciar(time) {
-  menu.style.display = "none";
-  canvas.style.display = "block";
-  placar.style.display = "block";
-  desenhar();
+let bola = { x: 150, y: 300, r: 8, vx: 0, vy: 0 };
+let jogador = { x: 150, y: 330 };
+let zagueiro = { x: 150, y: 220, dir: 1 };
+let goleiro = { x: 150, y: 30, dir: 1 };
+
+function escolherTime(nome, f) {
+  document.getElementById("time").innerText = nome;
+  forca = f;
 }
 
-canvas.addEventListener("click", () => {
-  bola.vy = -3;
-});
+function iniciar() {
+  document.getElementById("menu").style.display = "none";
+  canvas.style.display = "block";
+  document.getElementById("hud").style.display = "block";
+  document.getElementById("controles").style.display = "block";
+  loop();
+}
 
-function desenharCampo() {
-  ctx.fillStyle = "#1e7f3f";
-  ctx.fillRect(0, 0, 300, 400);
+function mover(dx) {
+  jogador.x += dx;
+  bola.x = jogador.x;
+}
+
+function chutar() {
+  bola.vy = -forca * 2;
+}
+
+function loop() {
+  ctx.clearRect(0,0,300,420);
+
+  // campo
+  ctx.strokeStyle = "white";
+  ctx.strokeRect(10,10,280,400);
 
   // gol
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = 4;
-  ctx.strokeRect(100, 0, 100, 20);
-}
+  ctx.strokeRect(110,10,80,20);
 
-function desenharBola() {
+  // jogador
+  ctx.fillStyle = "blue";
   ctx.beginPath();
-  ctx.arc(bola.x, bola.y, bola.r, 0, Math.PI * 2);
-  ctx.fillStyle = "white";
+  ctx.arc(jogador.x, jogador.y, 10, 0, Math.PI*2);
   ctx.fill();
-}
 
-function atualizar() {
-  bola.x += bola.vx;
+  // bola
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.arc(bola.x, bola.y, bola.r, 0, Math.PI*2);
+  ctx.fill();
+
+  // zagueiro Palasque
+  zagueiro.x += zagueiro.dir * 2;
+  if (zagueiro.x > 240 || zagueiro.x < 60) zagueiro.dir *= -1;
+  ctx.fillStyle = "red";
+  ctx.fillRect(zagueiro.x-15, zagueiro.y, 30, 8);
+
+  // goleiro Chico
+  goleiro.x += goleiro.dir * 2;
+  if (goleiro.x > 210 || goleiro.x < 90) goleiro.dir *= -1;
+  ctx.fillStyle = "yellow";
+  ctx.fillRect(goleiro.x-25, 30, 50, 8);
+
+  // movimento bola
   bola.y += bola.vy;
+  bola.vy *= 0.98;
 
-  if (bola.x < 10 || bola.x > 290) bola.vx *= -1;
-  if (bola.y > 390) bola.vy *= -1;
-
-  // GOL
-  if (bola.y < 20 && bola.x > 100 && bola.x < 200) {
-    gols++;
-    golsTxt.innerText = gols;
-    bola.x = 150;
-    bola.y = 200;
+  // colisão zagueiro
+  if (bola.y < zagueiro.y+8 && bola.x > zagueiro.x-15 && bola.x < zagueiro.x+15) {
+    bola.vy = 3;
   }
-}
 
-function desenhar() {
-  ctx.clearRect(0, 0, 300, 400);
-  desenharCampo();
-  desenharBola();
-  atualizar();
-  requestAnimationFrame(desenhar);
+  // defesa goleiro
+  if (bola.y < 38 && bola.x > goleiro.x-25 && bola.x < goleiro.x+25) {
+    bola.vy = 3;
+  }
+
+  // gol
+  if (bola.y < 10 && bola.x > 110 && bola.x < 190) {
+    gols++;
+    document.getElementById("gols").innerText = gols;
+    bola.y = 300;
+    bola.vy = 0;
+  }
+
+  // reset
+  if (bola.y > 420) {
+    bola.y = 300;
+    bola.vy = 0;
+  }
+
+  requestAnimationFrame(loop);
 }
 </script>
 
 </body>
-</html> 
+</html>
