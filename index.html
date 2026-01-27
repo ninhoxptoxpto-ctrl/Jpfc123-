@@ -6,59 +6,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{
-  margin:0;
-  background:#0b5d2a;
-  font-family:Arial;
-  color:white;
-  text-align:center;
-}
-button{
-  padding:10px 16px;
-  margin:4px;
-  font-size:14px;
-}
-#campo{
-  width:300px;
-  height:460px;
-  margin:auto;
-  background:#1e7f3f;
-  border:4px solid white;
-  position:relative;
-}
-.gol{
-  position:absolute;
-  top:0;
-  left:90px;
-  width:120px;
-  height:40px;
-  border:3px solid white;
-}
+body{margin:0;background:#0b5d2a;font-family:Arial;color:white;text-align:center}
+#campo{width:300px;height:460px;margin:auto;background:#1e7f3f;border:4px solid white;position:relative}
+.gol{position:absolute;top:0;left:90px;width:120px;height:40px;border:3px solid white}
 .jogador,.zagueiro,.goleiro,.bola{
-  position:absolute;
-  border-radius:50%;
-  font-size:10px;
-  color:white;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  position:absolute;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:bold;color:white
 }
-.jogador{width:26px;height:26px;}
-.zagueiro{width:26px;height:26px;background:red;}
-.goleiro{width:40px;height:16px;background:black;border-radius:6px;}
-.bola{width:12px;height:12px;background:white;}
+.jogador{width:26px;height:26px;background:#00e676}
+.zagueiro{width:26px;height:26px;background:#e53935}
+.goleiro{width:42px;height:16px;background:black;border-radius:6px}
+.bola{width:12px;height:12px;background:white}
+button{padding:8px 14px;margin:3px}
 </style>
 </head>
 
 <body>
 
-<h3>⚽ Mini Futebol JP</h3>
+<h3>⚽ Mini Futebol JP — Zagueiro Inteligente</h3>
 
 <div id="campo">
   <div class="gol"></div>
 
-  <div id="j1" class="jogador"></div>
-  <div id="j2" class="jogador"></div>
+  <div id="j1" class="jogador">Julia<br>05</div>
+  <div id="j2" class="jogador">Vanessa<br>10</div>
 
   <div id="z1" class="zagueiro"></div>
   <div id="z2" class="zagueiro"></div>
@@ -77,140 +49,152 @@ button{
 </div>
 
 <script>
-/* === JOGADORES === */
-const j1={x:120,y:360,n:"Julia",num:5};
-const j2={x:180,y:360,n:"Vanessa",num:10};
+const j1={x:120,y:360};
+const j2={x:180,y:360};
 const bola={x:150,y:340};
 
-const z1={x:80,y:220};
-const z2={x:220,y:220};
+const z1={x:80,y:220,temBola:false};
+const z2={x:220,y:220,temBola:false};
 const gk={x:130,y:20};
 
 let atual=1;
-let posse=true;
-let animando=false;
+let dono="jogador";
+let anim=false;
 
-/* === ELEMENTOS === */
-const e=(id)=>document.getElementById(id);
+const el=id=>document.getElementById(id);
 
-e("j1").innerHTML="Julia<br>05";
-e("j2").innerHTML="Vanessa<br>10";
-e("j1").style.background="#00e676";
-e("j2").style.background="#00e676";
-
-/* === FUNÇÕES === */
 function draw(){
   pos("j1",j1);pos("j2",j2);
   pos("z1",z1);pos("z2",z2);
   pos("gk",gk);pos("bola",bola);
 }
-
 function pos(id,o){
-  const el=e(id);
-  el.style.left=o.x+"px";
-  el.style.top=o.y+"px";
+  el(id).style.left=o.x+"px";
+  el(id).style.top=o.y+"px";
+}
+
+function jogadorComBola(){
+  return atual===1?j1:j2;
 }
 
 function move(dx,dy){
-  if(!posse||animando)return;
-  let j=atual===1?j1:j2;
+  if(anim||dono!=="jogador")return;
+  let j=jogadorComBola();
   j.x+=dx;j.y+=dy;
   bola.x=j.x+7;bola.y=j.y-12;
-  checarRoubo();
   draw();
 }
 
-/* === PASSE CORRIGIDO === */
 function passe(){
-  if(!posse||animando)return;
-  animando=true;
-
-  let origem=atual===1?j1:j2;
-  let destino=atual===1?j2:j1;
-
-  let passos=20;
-  let dx=(destino.x+7-origem.x-7)/passos;
-  let dy=(destino.y-12-origem.y+12)/passos;
+  if(anim||dono!=="jogador")return;
+  anim=true;
+  let o=jogadorComBola();
+  let d=atual===1?j2:j1;
   let i=0;
-
-  let intervalo=setInterval(()=>{
-    bola.x+=dx;
-    bola.y+=dy;
-    checarRoubo();
+  let it=setInterval(()=>{
+    bola.x+=(d.x-o.x)/20;
+    bola.y+=(d.y-o.y)/20;
     draw();
     i++;
-
-    if(i>=passos){
-      clearInterval(intervalo);
+    if(i>20){
+      clearInterval(it);
       atual=atual===1?2:1;
-      animando=false;
+      anim=false;
     }
   },30);
 }
 
-/* === CHUTE + DEFESA REAL === */
 function chutar(){
-  if(!posse||animando)return;
-  animando=true;
-
-  let intervalo=setInterval(()=>{
+  if(anim||dono!=="jogador")return;
+  anim=true;
+  let it=setInterval(()=>{
     bola.y-=14;
     draw();
-
-    // DEFESA
     if(colide(bola,gk)){
-      clearInterval(intervalo);
-      animando=false;
-      posse=false;
-      setTimeout(reset,700);
+      clearInterval(it);
+      reset();
     }
-
-    // GOL
     if(bola.y<40){
-      clearInterval(intervalo);
-      animando=false;
-      alert("⚽ GOOOOL!");
+      clearInterval(it);
+      alert("⚽ GOL!");
       reset();
     }
   },30);
 }
 
-/* === IA === */
+/* ===== IA DO ZAGUEIRO ===== */
 setInterval(()=>{
+  let alvo = dono==="jogador" ? jogadorComBola() : bola;
+
   [z1,z2].forEach(z=>{
-    z.x+=(bola.x-z.x)/20;
-    z.y+=(bola.y-z.y)/20;
+    if(!z.temBola){
+      z.x+=(alvo.x-z.x)/18;
+      z.y+=(alvo.y-z.y)/18;
+      if(colide(z,bola)){
+        z.temBola=true;
+        dono="zagueiro";
+      }
+    }else{
+      bola.x=z.x+7;
+      bola.y=z.y+20;
+
+      // decisão inteligente
+      if(z.y<160 && Math.random()<0.02){
+        chuteZagueiro(z);
+      }else if(Math.random()<0.01){
+        passeZagueiro(z);
+      }else{
+        z.y+=2;
+      }
+    }
   });
-  checarRoubo();
+
   draw();
 },80);
 
-setInterval(()=>{
-  gk.x+=(bola.x-gk.x)/6;
-  draw();
-},60);
+function passeZagueiro(z){
+  let outro=z===z1?z2:z1;
+  z.temBola=false;
+  outro.temBola=true;
+}
 
-/* === COLISÕES === */
+function chuteZagueiro(z){
+  z.temBola=false;
+  let it=setInterval(()=>{
+    bola.y-=12;
+    draw();
+    if(bola.y<40){
+      clearInterval(it);
+      alert("⚽ GOL DO ZAGUEIRO!");
+      reset();
+    }
+  },30);
+}
+
+setInterval(()=>{
+  if(dono==="zagueiro"){
+    let j=jogadorComBola();
+    if(colide(j,bola)){
+      dono="jogador";
+      z1.temBola=false;
+      z2.temBola=false;
+    }
+  }
+},50);
+
 function colide(a,b){
   return Math.abs(a.x-b.x)<18 && Math.abs(a.y-b.y)<18;
 }
 
-function checarRoubo(){
-  if(colide(bola,z1)||colide(bola,z2)){
-    posse=false;
-    animando=false;
-    setTimeout(reset,700);
-  }
-}
-
-/* === RESET === */
 function reset(){
   j1.x=120;j1.y=360;
   j2.x=180;j2.y=360;
+  z1.x=80;z1.y=220;z1.temBola=false;
+  z2.x=220;z2.y=220;z2.temBola=false;
   bola.x=150;bola.y=340;
+  dono="jogador";
   atual=1;
-  posse=true;
-  animando=false;
+  anim=false;
   draw();
 }
 
@@ -218,4 +202,4 @@ draw();
 </script>
 
 </body>
-</html>
+  </html>
