@@ -2,90 +2,101 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Mini Futebol JP</title>
+<title>Futebol JP</title>
 
 <style>
 body {
-  background: #0b5f2a;
-  color: white;
-  font-family: Arial, sans-serif;
-  text-align: center;
+  background:#0a5c2b;
+  color:white;
+  font-family:Arial;
+  text-align:center;
+}
+
+#placar {
+  font-size:18px;
+  margin:10px;
 }
 
 #campo {
-  position: relative;
-  width: 320px;
-  height: 480px;
-  margin: auto;
-  background: #1e7f3f;
-  border: 5px solid white;
-  border-radius: 10px;
+  position:relative;
+  width:320px;
+  height:480px;
+  margin:auto;
+  background:#1e7f3f;
+  border:5px solid white;
+  border-radius:10px;
 }
 
-/* Gol */
 #gol {
-  position: absolute;
-  top: 0;
-  left: 80px;
-  width: 160px;
-  height: 40px;
-  border: 4px solid white;
+  position:absolute;
+  top:0;
+  left:80px;
+  width:160px;
+  height:40px;
+  border:4px solid white;
 }
 
-/* Elementos */
-.jogador, .zagueiro, .goleiro, .bola {
-  position: absolute;
+.jogador,.j2,.zagueiro,.goleiro,.bola{
+  position:absolute;
+  border-radius:50%;
 }
 
-.jogador {
-  width: 28px;
-  height: 28px;
-  background: #00ff88;
-  border-radius: 50%;
+.jogador,.j2{
+  width:28px;
+  height:28px;
+  background:#00e676;
 }
 
-.zagueiro {
-  width: 28px;
-  height: 28px;
-  background: #ff5555;
-  border-radius: 50%;
+.j2{ background:#00b0ff; }
+
+.zagueiro{
+  width:28px;
+  height:28px;
+  background:red;
 }
 
-.goleiro {
-  width: 35px;
-  height: 15px;
-  background: black;
-  border-radius: 5px;
+.goleiro{
+  width:40px;
+  height:16px;
+  background:black;
+  border-radius:5px;
 }
 
-.bola {
-  width: 14px;
-  height: 14px;
-  background: white;
-  border-radius: 50%;
+.bola{
+  width:14px;
+  height:14px;
+  background:white;
 }
 
-/* Nome */
-.nome {
-  position: absolute;
-  top: 30px;
-  font-size: 10px;
-  width: 70px;
-  left: -20px;
+.nome{
+  position:absolute;
+  top:30px;
+  font-size:10px;
+  width:90px;
+  left:-30px;
 }
 
-/* Botões */
-button {
-  margin: 4px;
-  padding: 10px 15px;
-  font-size: 16px;
+button{
+  margin:4px;
+  padding:10px;
+  font-size:16px;
 }
 </style>
 </head>
 
 <body>
 
-<h2>Cyber Games FC | Julia 05</h2>
+<h3>
+Raios de Gelo MF 09 / Pedro 10<br>
+Fantasma JP 11 / Ninho<br>
+Gamers Dores 10 / Sancha 09<br>
+Praia do Dragão Julia 05 / Vanessa 10
+</h3>
+
+<div id="placar">
+⚽ Gols: <span id="gols">0</span> |
+🧤 Defesas: <span id="defesas">0</span>
+</div>
 
 <div id="campo">
   <div id="gol"></div>
@@ -101,6 +112,10 @@ button {
   <div id="jogador" class="jogador">
     <div class="nome">Julia 05</div>
   </div>
+
+  <div id="j2" class="j2">
+    <div class="nome">Vanessa 10</div>
+  </div>
 </div>
 
 <br>
@@ -110,113 +125,97 @@ button {
 <button onclick="dir()">➡️</button><br>
 <button onclick="baixo()">⬇️</button><br><br>
 
-<button onclick="driblar()">🌀 DRIBLE</button>
+<button onclick="drible()">🌀 DRIBLE</button>
+<button onclick="passe()">🤝 PASSE</button>
 <button onclick="chutar()">⚽ CHUTAR</button>
 
 <script>
-const jogador = document.getElementById("jogador");
-const bola = document.getElementById("bola");
-const zagueiroEl = document.getElementById("zagueiro");
-const goleiroEl = document.getElementById("goleiro");
+const jogador=document.getElementById("jogador");
+const j2=document.getElementById("j2");
+const bola=document.getElementById("bola");
+const zEl=document.getElementById("zagueiro");
+const gEl=document.getElementById("goleiro");
 
-let j = { x: 146, y: 380 };
-let b = { x: 153, y: 360 };
+let gols=0,defesas=0;
+let comBola=1;
 
-let z = { x: 120, y: 230, dir: 1 };
-let g = { x: 120, dir: 1 };
+let j={x:150,y:380};
+let jB={x:220,y:360};
+let b={x:160,y:390};
+let z={x:120,y:240,dir:1};
+let g={x:120,dir:1};
 
-function atualizar() {
-  jogador.style.left = j.x + "px";
-  jogador.style.top = j.y + "px";
-
-  bola.style.left = b.x + "px";
-  bola.style.top = b.y + "px";
-
-  zagueiroEl.style.left = z.x + "px";
-  zagueiroEl.style.top = z.y + "px";
-
-  goleiroEl.style.left = g.x + "px";
-  goleiroEl.style.top = "15px";
-
-  colisaoZagueiro();
+function atualizar(){
+ jogador.style.left=j.x+"px";
+ jogador.style.top=j.y+"px";
+ j2.style.left=jB.x+"px";
+ j2.style.top=jB.y+"px";
+ bola.style.left=b.x+"px";
+ bola.style.top=b.y+"px";
+ zEl.style.left=z.x+"px";
+ zEl.style.top=z.y+"px";
+ gEl.style.left=g.x+"px";
+ gEl.style.top="15px";
 }
 
-function cima()  { j.y -= 10; b.y -= 10; atualizar(); }
-function baixo() { j.y += 10; b.y += 10; atualizar(); }
-function esq()   { j.x -= 10; b.x -= 10; atualizar(); }
-function dir()   { j.x += 10; b.x += 10; atualizar(); }
-
-function driblar() {
-  j.x += 30;
-  atualizar();
+function syncBola(){
+ if(comBola===1){b.x=j.x+7;b.y=j.y+10;}
+ else{b.x=jB.x+7;b.y=jB.y+10;}
+ atualizar();
 }
 
-/* CHUTE COM DEFESA REAL */
-function chutar() {
-  let chute = setInterval(() => {
-    b.y -= 12;
-    atualizar();
+function cima(){if(comBola===1)j.y-=10;else jB.y-=10;syncBola();}
+function baixo(){if(comBola===1)j.y+=10;else jB.y+=10;syncBola();}
+function esq(){if(comBola===1)j.x-=10;else jB.x-=10;syncBola();}
+function dir(){if(comBola===1)j.x+=10;else jB.x+=10;syncBola();}
 
-    // 🧤 DEFESA REAL DO GOLEIRO (REBOTE)
-    if (
-      b.y <= 35 &&
-      b.x >= g.x &&
-      b.x <= g.x + 35
-    ) {
-      clearInterval(chute);
+function drible(){ if(comBola===1)j.x+=25; else jB.x+=25; syncBola(); }
 
-      let rebote = setInterval(() => {
-        b.y += 10;
-        atualizar();
-        if (b.y >= j.y - 10) clearInterval(rebote);
-      }, 40);
-
-      return;
-    }
-
-    // ⚽ GOL
-    if (b.y <= 5) {
-      clearInterval(chute);
-      alert("⚽ GOOOOOL!!!");
-      resetar();
-    }
-
-  }, 40);
+function passe(){
+ comBola = comBola===1 ? 2 : 1;
+ syncBola();
 }
 
-function resetar() {
-  j = { x: 146, y: 380 };
-  b = { x: 153, y: 360 };
-  atualizar();
+function chutar(){
+ let chute=setInterval(()=>{
+   b.y-=12; atualizar();
+
+   if(b.y<=35 && b.x>=g.x && b.x<=g.x+40){
+     clearInterval(chute);
+     defesas++;
+     document.getElementById("defesas").innerText=defesas;
+     resetar();
+   }
+
+   if(b.y<=5){
+     clearInterval(chute);
+     gols++;
+     document.getElementById("gols").innerText=gols;
+     resetar();
+   }
+ },40);
 }
 
-/* COLISÃO DO ZAGUEIRO */
-function colisaoZagueiro() {
-  let dx = j.x - z.x;
-  let dy = j.y - z.y;
-  let dist = Math.sqrt(dx*dx + dy*dy);
-
-  if (dist < 25) {
-    alert("🧱 Palasque desarmou!");
-    resetar();
-  }
+function resetar(){
+ j={x:150,y:380};
+ jB={x:220,y:360};
+ comBola=1;
+ syncBola();
 }
 
-/* ZAGUEIRO SE MEXENDO */
-setInterval(() => {
-  z.x += z.dir * 6;
-  if (z.x < 80 || z.x > 210) z.dir *= -1;
-  atualizar();
-}, 300);
+setInterval(()=>{
+ z.x+=z.dir*6;
+ if(z.x<70||z.x>220)z.dir*=-1;
+ atualizar();
+},300);
 
-/* GOLEIRO SE MEXENDO */
-setInterval(() => {
-  g.x += g.dir * 8;
-  if (g.x < 90 || g.x > 195) g.dir *= -1;
-  atualizar();
-}, 250);
+setInterval(()=>{
+ g.x+=g.dir*8;
+ if(g.x<90||g.x>200)g.dir*=-1;
+ atualizar();
+},250);
 
-atualizar();
+syncBola();
 </script>
 
 </body>
