@@ -2,22 +2,17 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Futebol JP</title>
+<title>Campeonato JP</title>
 
 <style>
-body {
-  background:#0a5c2b;
+body{
+  background:#0b4f28;
   color:white;
   font-family:Arial;
   text-align:center;
 }
 
-#placar {
-  font-size:18px;
-  margin:10px;
-}
-
-#campo {
+#campo{
   position:relative;
   width:320px;
   height:480px;
@@ -27,7 +22,7 @@ body {
   border-radius:10px;
 }
 
-#gol {
+#gol{
   position:absolute;
   top:0;
   left:80px;
@@ -38,12 +33,12 @@ body {
 
 .jogador,.j2,.zagueiro,.goleiro,.bola{
   position:absolute;
-  border-radius:50%;
 }
 
 .jogador,.j2{
   width:28px;
   height:28px;
+  border-radius:50%;
   background:#00e676;
 }
 
@@ -53,6 +48,7 @@ body {
   width:28px;
   height:28px;
   background:red;
+  border-radius:50%;
 }
 
 .goleiro{
@@ -66,32 +62,28 @@ body {
   width:14px;
   height:14px;
   background:white;
+  border-radius:50%;
 }
 
 .nome{
   position:absolute;
   top:30px;
+  left:-35px;
+  width:100px;
   font-size:10px;
-  width:90px;
-  left:-30px;
 }
 
 button{
   margin:4px;
   padding:10px;
-  font-size:16px;
+  font-size:15px;
 }
 </style>
 </head>
 
 <body>
 
-<h3>
-Raios de Gelo MF 09 / Pedro 10<br>
-Fantasma JP 11 / Ninho<br>
-Gamers Dores 10 / Sancha 09<br>
-Praia do Dragão Julia 05 / Vanessa 10
-</h3>
+<h3>🏆 CAMPEONATO JP</h3>
 
 <div id="placar">
 ⚽ Gols: <span id="gols">0</span> |
@@ -120,103 +112,4 @@ Praia do Dragão Julia 05 / Vanessa 10
 
 <br>
 
-<button onclick="cima()">⬆️</button><br>
-<button onclick="esq()">⬅️</button>
-<button onclick="dir()">➡️</button><br>
-<button onclick="baixo()">⬇️</button><br><br>
-
-<button onclick="drible()">🌀 DRIBLE</button>
-<button onclick="passe()">🤝 PASSE</button>
-<button onclick="chutar()">⚽ CHUTAR</button>
-
-<script>
-const jogador=document.getElementById("jogador");
-const j2=document.getElementById("j2");
-const bola=document.getElementById("bola");
-const zEl=document.getElementById("zagueiro");
-const gEl=document.getElementById("goleiro");
-
-let gols=0,defesas=0;
-let comBola=1;
-
-let j={x:150,y:380};
-let jB={x:220,y:360};
-let b={x:160,y:390};
-let z={x:120,y:240,dir:1};
-let g={x:120,dir:1};
-
-function atualizar(){
- jogador.style.left=j.x+"px";
- jogador.style.top=j.y+"px";
- j2.style.left=jB.x+"px";
- j2.style.top=jB.y+"px";
- bola.style.left=b.x+"px";
- bola.style.top=b.y+"px";
- zEl.style.left=z.x+"px";
- zEl.style.top=z.y+"px";
- gEl.style.left=g.x+"px";
- gEl.style.top="15px";
-}
-
-function syncBola(){
- if(comBola===1){b.x=j.x+7;b.y=j.y+10;}
- else{b.x=jB.x+7;b.y=jB.y+10;}
- atualizar();
-}
-
-function cima(){if(comBola===1)j.y-=10;else jB.y-=10;syncBola();}
-function baixo(){if(comBola===1)j.y+=10;else jB.y+=10;syncBola();}
-function esq(){if(comBola===1)j.x-=10;else jB.x-=10;syncBola();}
-function dir(){if(comBola===1)j.x+=10;else jB.x+=10;syncBola();}
-
-function drible(){ if(comBola===1)j.x+=25; else jB.x+=25; syncBola(); }
-
-function passe(){
- comBola = comBola===1 ? 2 : 1;
- syncBola();
-}
-
-function chutar(){
- let chute=setInterval(()=>{
-   b.y-=12; atualizar();
-
-   if(b.y<=35 && b.x>=g.x && b.x<=g.x+40){
-     clearInterval(chute);
-     defesas++;
-     document.getElementById("defesas").innerText=defesas;
-     resetar();
-   }
-
-   if(b.y<=5){
-     clearInterval(chute);
-     gols++;
-     document.getElementById("gols").innerText=gols;
-     resetar();
-   }
- },40);
-}
-
-function resetar(){
- j={x:150,y:380};
- jB={x:220,y:360};
- comBola=1;
- syncBola();
-}
-
-setInterval(()=>{
- z.x+=z.dir*6;
- if(z.x<70||z.x>220)z.dir*=-1;
- atualizar();
-},300);
-
-setInterval(()=>{
- g.x+=g.dir*8;
- if(g.x<90||g.x>200)g.dir*=-1;
- atualizar();
-},250);
-
-syncBola();
-</script>
-
-</body>
-</html>
+<button onclick="cima()">⬆
