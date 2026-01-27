@@ -4,19 +4,24 @@
 <meta charset="UTF-8">
 <title>Mini Futebol JP</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 body{margin:0;background:#0b5d2a;font-family:Arial;color:white;text-align:center}
-#campo{width:300px;height:460px;margin:auto;background:#1e7f3f;border:4px solid white;position:relative}
-.gol{position:absolute;top:0;left:90px;width:120px;height:40px;border:3px solid white}
+#campo{
+  width:320px;height:480px;margin:auto;
+  background:#1e7f3f;border:4px solid white;position:relative
+}
+.gol{
+  position:absolute;left:100px;width:120px;height:30px;border:3px solid white
+}
+#golsup{top:0} #golinf{bottom:0}
 .jogador,.zagueiro,.goleiro,.bola{
   position:absolute;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-size:9px;font-weight:bold;color:white
+  font-size:9px;font-weight:bold;color:white;text-align:center
 }
-.jogador{width:26px;height:26px;background:#00e676}
-.zagueiro{width:26px;height:26px;background:#e53935}
-.goleiro{width:42px;height:16px;background:black;border-radius:6px}
+.jogador{width:26px;height:26px}
+.zagueiro{width:26px;height:26px}
+.goleiro{width:44px;height:14px;background:black;border-radius:6px}
 .bola{width:12px;height:12px;background:white}
 button{padding:8px 14px;margin:3px}
 </style>
@@ -24,18 +29,21 @@ button{padding:8px 14px;margin:3px}
 
 <body>
 
-<h3>⚽ Mini Futebol JP — Zagueiro Inteligente</h3>
+<h3>⚽ Mini Futebol JP — Ataque & Defesa</h3>
 
 <div id="campo">
-  <div class="gol"></div>
+  <div id="golsup" class="gol"></div>
+  <div id="golinf" class="gol"></div>
 
-  <div id="j1" class="jogador">Julia<br>05</div>
-  <div id="j2" class="jogador">Vanessa<br>10</div>
+  <div id="j1" class="jogador">JP<br>10</div>
+  <div id="j2" class="jogador">Pedro<br>09</div>
 
   <div id="z1" class="zagueiro"></div>
   <div id="z2" class="zagueiro"></div>
 
-  <div id="gk" class="goleiro"></div>
+  <div id="gk1" class="goleiro"></div>
+  <div id="gk2" class="goleiro"></div>
+
   <div id="bola" class="bola"></div>
 </div>
 
@@ -49,47 +57,57 @@ button{padding:8px 14px;margin:3px}
 </div>
 
 <script>
-const j1={x:120,y:360};
-const j2={x:180,y:360};
-const bola={x:150,y:340};
+/* === CONFIG DOS TIMES === */
+const meuTime={cor:"#00e676"};
+const advTime={cor:"#e53935"};
 
-const z1={x:80,y:220,temBola:false};
-const z2={x:220,y:220,temBola:false};
-const gk={x:130,y:20};
+j1.style.background=meuTime.cor;
+j2.style.background=meuTime.cor;
+z1.style.background=advTime.cor;
+z2.style.background=advTime.cor;
+
+/* === OBJETOS === */
+const j1p={x:130,y:360};
+const j2p={x:190,y:360};
+const bola={x:160,y:330};
+
+const z1p={x:90,y:200,temBola:false};
+const z2p={x:210,y:200,temBola:false};
+
+const gkMeu={x:140,y:430};
+const gkAdv={x:140,y:20};
 
 let atual=1;
 let dono="jogador";
 let anim=false;
 
 const el=id=>document.getElementById(id);
+const pos=(id,o)=>{el(id).style.left=o.x+"px";el(id).style.top=o.y+"px"};
 
 function draw(){
-  pos("j1",j1);pos("j2",j2);
-  pos("z1",z1);pos("z2",z2);
-  pos("gk",gk);pos("bola",bola);
-}
-function pos(id,o){
-  el(id).style.left=o.x+"px";
-  el(id).style.top=o.y+"px";
+  pos("j1",j1p);pos("j2",j2p);
+  pos("z1",z1p);pos("z2",z2p);
+  pos("gk1",gkMeu);pos("gk2",gkAdv);
+  pos("bola",bola);
 }
 
-function jogadorComBola(){
-  return atual===1?j1:j2;
-}
+function jogador(){return atual===1?j1p:j2p}
 
+/* === MOVIMENTO === */
 function move(dx,dy){
   if(anim||dono!=="jogador")return;
-  let j=jogadorComBola();
+  let j=jogador();
   j.x+=dx;j.y+=dy;
   bola.x=j.x+7;bola.y=j.y-12;
   draw();
 }
 
+/* === PASSE === */
 function passe(){
   if(anim||dono!=="jogador")return;
   anim=true;
-  let o=jogadorComBola();
-  let d=atual===1?j2:j1;
+  let o=jogador();
+  let d=atual===1?j2p:j1p;
   let i=0;
   let it=setInterval(()=>{
     bola.x+=(d.x-o.x)/20;
@@ -104,32 +122,32 @@ function passe(){
   },30);
 }
 
+/* === CHUTE === */
 function chutar(){
   if(anim||dono!=="jogador")return;
   anim=true;
   let it=setInterval(()=>{
     bola.y-=14;
     draw();
-    if(colide(bola,gk)){
-      clearInterval(it);
-      reset();
+    if(colide(bola,gkAdv)){
+      clearInterval(it);reset();
     }
-    if(bola.y<40){
+    if(bola.y<30){
       clearInterval(it);
-      alert("⚽ GOL!");
+      alert("⚽ GOL SEU!");
       reset();
     }
   },30);
 }
 
-/* ===== IA DO ZAGUEIRO ===== */
+/* === IA ADVERSÁRIA === */
 setInterval(()=>{
-  let alvo = dono==="jogador" ? jogadorComBola() : bola;
+  let alvo=dono==="jogador"?jogador():bola;
 
-  [z1,z2].forEach(z=>{
+  [z1p,z2p].forEach(z=>{
     if(!z.temBola){
-      z.x+=(alvo.x-z.x)/18;
-      z.y+=(alvo.y-z.y)/18;
+      z.x+=(alvo.x-z.x)/20;
+      z.y+=(alvo.y-z.y)/20;
       if(colide(z,bola)){
         z.temBola=true;
         dono="zagueiro";
@@ -137,14 +155,10 @@ setInterval(()=>{
     }else{
       bola.x=z.x+7;
       bola.y=z.y+20;
+      z.y+=2.2;
 
-      // decisão inteligente
-      if(z.y<160 && Math.random()<0.02){
-        chuteZagueiro(z);
-      }else if(Math.random()<0.01){
-        passeZagueiro(z);
-      }else{
-        z.y+=2;
+      if(z.y>400){
+        chuteAdv();
       }
     }
   });
@@ -152,32 +166,38 @@ setInterval(()=>{
   draw();
 },80);
 
-function passeZagueiro(z){
-  let outro=z===z1?z2:z1;
-  z.temBola=false;
-  outro.temBola=true;
-}
-
-function chuteZagueiro(z){
-  z.temBola=false;
+/* === CHUTE ADVERSÁRIO === */
+function chuteAdv(){
+  z1p.temBola=false;z2p.temBola=false;
   let it=setInterval(()=>{
-    bola.y-=12;
+    bola.y+=14;
     draw();
-    if(bola.y<40){
+    if(colide(bola,gkMeu)){
+      clearInterval(it);reset();
+    }
+    if(bola.y>450){
       clearInterval(it);
-      alert("⚽ GOL DO ZAGUEIRO!");
+      alert("😭 GOL DO ADVERSÁRIO");
       reset();
     }
   },30);
 }
 
+/* === GOLEIROS SE MEXEM === */
+setInterval(()=>{
+  gkMeu.x+=(bola.x-gkMeu.x)/8;
+  gkAdv.x+=(bola.x-gkAdv.x)/8;
+  draw();
+},60);
+
+/* === ROUBO === */
 setInterval(()=>{
   if(dono==="zagueiro"){
-    let j=jogadorComBola();
+    let j=jogador();
     if(colide(j,bola)){
       dono="jogador";
-      z1.temBola=false;
-      z2.temBola=false;
+      z1p.temBola=false;
+      z2p.temBola=false;
     }
   }
 },50);
@@ -187,11 +207,11 @@ function colide(a,b){
 }
 
 function reset(){
-  j1.x=120;j1.y=360;
-  j2.x=180;j2.y=360;
-  z1.x=80;z1.y=220;z1.temBola=false;
-  z2.x=220;z2.y=220;z2.temBola=false;
-  bola.x=150;bola.y=340;
+  j1p.x=130;j1p.y=360;
+  j2p.x=190;j2p.y=360;
+  z1p.x=90;z1p.y=200;z1p.temBola=false;
+  z2p.x=210;z2p.y=200;z2p.temBola=false;
+  bola.x=160;bola.y=330;
   dono="jogador";
   atual=1;
   anim=false;
@@ -200,6 +220,5 @@ function reset(){
 
 draw();
 </script>
-
 </body>
-  </html>
+</html>
