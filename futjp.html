@@ -3,78 +3,90 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fut de Botão JP</title>
+<title>Fut de Botão JP Ultimate</title>
 <style>
-body{margin:0;background:#0a8f3c;font-family:Arial;color:#fff;text-align:center}
-#menu,#teams{padding:20px}
-button{padding:12px 18px;margin:6px;border:none;border-radius:10px;font-size:16px}
-canvas{background:#1fa34a;border:6px solid #fff;border-radius:12px}
+body{margin:0;background:#0b8f3f;font-family:Arial;overflow:hidden}
+#menu,#teams,#mode{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+button{padding:14px 22px;margin:8px;border:none;border-radius:14px;font-size:18px}
+canvas{background:#1fbf5b;display:none}
 .controls{position:fixed;bottom:10px;width:100%;display:flex;justify-content:space-around}
-.ctrl{background:#fff;color:#000;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold}
+.ctrl{width:65px;height:65px;border-radius:50%;background:#fff;color:#000;font-weight:bold;display:flex;align-items:center;justify-content:center}
 </style>
 </head>
 
 <body>
 
 <div id="menu">
-<h2>⚽ Fut de Botão JP</h2>
-<button onclick="mode='amistoso';showTeams()">Amistoso</button>
+<h2>⚽ FUT DE BOTÃO JP</h2>
+<button onclick="showMode()">JOGAR</button>
+</div>
+
+<div id="mode" style="display:none">
+<button onclick="mode='ia';showTeams()">Modo IA</button>
+<button onclick="mode='2p';showTeams()">2 Jogadores</button>
 </div>
 
 <div id="teams" style="display:none">
 <h3>Escolha os Times</h3>
-<button onclick="selectTeam(0)">Fantasma FC</button>
-<button onclick="selectTeam(1)">Raio de Gelo</button>
-<button onclick="selectTeam(2)">Dragão</button>
-<button onclick="selectTeam(3)">Gamers</button>
+<button onclick="pick(0)">Fantasma FC</button>
+<button onclick="pick(1)">Dragão FC</button>
+<button onclick="pick(2)">Raio Azul</button>
+<button onclick="pick(3)">Gelo Branco</button>
 </div>
 
-<canvas id="game" width="360" height="640" style="display:none"></canvas>
+<canvas id="game" width="360" height="640"></canvas>
 
-<div class="controls" style="display:none" id="controls">
-<div class="ctrl" ontouchstart="press('up')" ontouchend="release()">↑</div>
-<div class="ctrl" ontouchstart="press('left')" ontouchend="release()">←</div>
-<div class="ctrl" ontouchstart="press('right')" ontouchend="release()">→</div>
-<div class="ctrl" ontouchstart="press('down')" ontouchend="release()">↓</div>
+<div class="controls" id="controls" style="display:none">
+<div class="ctrl" ontouchstart="btn='up'" ontouchend="btn=''">↑</div>
+<div class="ctrl" ontouchstart="btn='left'" ontouchend="btn=''">←</div>
+<div class="ctrl" ontouchstart="btn='right'" ontouchend="btn=''">→</div>
+<div class="ctrl" ontouchstart="btn='down'" ontouchend="btn=''">↓</div>
 <div class="ctrl" ontouchstart="kick()">⚽</div>
 </div>
 
 <script>
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
+const c=document.getElementById("game");
+const ctx=c.getContext("2d");
 
-let mode="",step="",btn="";
-let teamA=null,teamB=null;
+let btn="",mode="";
+let t1=null,t2=null,sel=0;
 
 const teams=[
-{name:"Fantasma",color:"#7a1fa2"},
+{name:"Fantasma",color:"#8a2be2"},
+{name:"Dragão",color:"#ff3030"},
 {name:"Raio",color:"#00ffff"},
-{name:"Dragão",color:"#ff2a2a"},
-{name:"Gamers",color:"#39ff14"}
+{name:"Gelo",color:"#ffffff"}
 ];
 
 let players=[],ball;
 
+function showMode(){
+menu.style.display="none";
+modeDiv.style.display="flex";
+}
+const modeDiv=document.getElementById("mode");
+
 function showTeams(){
-document.getElementById("menu").style.display="none";
-document.getElementById("teams").style.display="block";
+modeDiv.style.display="none";
+teamsDiv.style.display="flex";
+}
+const teamsDiv=document.getElementById("teams");
+
+function pick(i){
+if(!t1){t1=teams[i];return;}
+t2=teams[i];
+start();
 }
 
-function selectTeam(i){
-if(!teamA){teamA=teams[i];return;}
-teamB=teams[i];
-startGame();
-}
-
-function startGame(){
-document.getElementById("teams").style.display="none";
-canvas.style.display="block";
-document.getElementById("controls").style.display="flex";
+function start(){
+teamsDiv.style.display="none";
+c.style.display="block";
+controls.style.display="flex";
 
 players=[
-{x:180,y:520,vx:0,vy:0,r:18,color:teamA.color},
-{x:140,y:120,vx:0,vy:0,r:18,color:teamB.color},
-{x:220,y:160,vx:0,vy:0,r:18,color:teamB.color}
+{x:180,y:520,vx:0,vy:0,r:18,color:t1.color,ai:false},
+{x:140,y:120,vx:0,vy:0,r:18,color:t2.color,ai:true},
+{x:220,y:160,vx:0,vy:0,r:18,color:t2.color,ai:true}
 ];
 
 ball={x:180,y:320,vx:0,vy:0,r:7};
@@ -82,25 +94,30 @@ ball={x:180,y:320,vx:0,vy:0,r:7};
 loop();
 }
 
-function press(b){btn=b;}
-function release(){btn="";}
-
 function kick(){
 let p=players[0];
 let dx=ball.x-p.x;
 let dy=ball.y-p.y;
 let d=Math.hypot(dx,dy);
-if(d<30){
-ball.vx=dx*0.6;
-ball.vy=dy*0.6;
+if(d<32){
+ball.vx=dx*0.7;
+ball.vy=dy*0.7;
 }
+}
+
+function aiMove(p){
+let dx=ball.x-p.x;
+let dy=ball.y-p.y;
+let d=Math.hypot(dx,dy);
+p.vx+=dx/d*0.25;
+p.vy+=dy/d*0.25;
 }
 
 function physics(o){
 o.x+=o.vx;
 o.y+=o.vy;
-o.vx*=0.95;
-o.vy*=0.95;
+o.vx*=0.96;
+o.vy*=0.96;
 
 if(o.x-o.r<20){o.x=20+o.r;o.vx*=-1;}
 if(o.x+o.r>340){o.x=340-o.r;o.vx*=-1;}
@@ -113,7 +130,7 @@ let dx=b.x-a.x;
 let dy=b.y-a.y;
 let d=Math.hypot(dx,dy);
 if(d<a.r+b.r){
-let nx=dx/d, ny=dy/d;
+let nx=dx/d,ny=dy/d;
 a.vx-=nx*1.2;
 a.vy-=ny*1.2;
 b.vx+=nx*1.2;
@@ -129,23 +146,41 @@ if(btn=="left")p.vx-=0.6;
 if(btn=="right")p.vx+=0.6;
 }
 
+function drawField(){
+ctx.strokeStyle="#fff";
+ctx.lineWidth=4;
+ctx.strokeRect(20,20,320,600);
+
+ctx.beginPath();
+ctx.moveTo(20,320);
+ctx.lineTo(340,320);
+ctx.stroke();
+
+ctx.beginPath();
+ctx.arc(180,320,60,0,Math.PI*2);
+ctx.stroke();
+}
+
 function drawPlayer(p){
 ctx.beginPath();
 ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
 ctx.fillStyle=p.color;
 ctx.fill();
+ctx.strokeStyle="#000";
+ctx.stroke();
 }
 
 function loop(){
 ctx.clearRect(0,0,360,640);
 
-ctx.strokeStyle="#fff";
-ctx.lineWidth=4;
-ctx.strokeRect(20,20,320,600);
-
+drawField();
 control();
 
-players.forEach(p=>physics(p));
+players.forEach(p=>{
+if(p.ai)aiMove(p);
+physics(p);
+});
+
 physics(ball);
 
 players.forEach(p=>collide(p,ball));
@@ -162,4 +197,4 @@ requestAnimationFrame(loop);
 }
 </script>
 </body>
-</html>
+  </html>
