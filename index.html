@@ -3,111 +3,79 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Futebol JP</title>
+<title>Campeonato Fut de Botão</title>
 
 <style>
-body {
-  margin: 0;
-  background: #0b5d2a;
-  color: white;
-  font-family: Arial;
-  text-align: center;
+body{
+  margin:0;
+  background:#0b5d2a;
+  color:white;
+  font-family:Arial;
+  text-align:center;
 }
 
-.hidden { display: none; }
+.hidden{display:none}
 
-button {
-  padding: 12px 20px;
-  font-size: 18px;
-  margin: 8px;
-  border-radius: 10px;
-  border: none;
+button{
+  padding:14px 22px;
+  font-size:18px;
+  border-radius:12px;
+  margin:6px;
+  border:none;
 }
 
-#campo {
-  width: 320px;
-  height: 520px;
-  background: #1f8f3f;
-  border: 5px solid white;
-  margin: auto;
-  position: relative;
+#campo{
+  width:320px;
+  height:520px;
+  background:#1f8f3f;
+  border:5px solid white;
+  margin:auto;
+  position:relative;
 }
 
-.linha {
-  position: absolute;
-  border: 3px solid white;
+.jogador,.cpu{
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  position:absolute;
+  font-size:10px;
+  line-height:34px;
+  font-weight:bold;
 }
 
-.gol {
-  width: 120px;
-  height: 15px;
-  background: white;
-  position: absolute;
-  left: 100px;
-}
-
-#golsup { top: 0; }
-#golinf { bottom: 0; }
-
-.jogador, .cpu, .gk {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  position: absolute;
-  font-size: 10px;
-  line-height: 32px;
-  text-align: center;
-  font-weight: bold;
-}
-
-.bola {
-  width: 14px;
-  height: 14px;
-  background: white;
-  border-radius: 50%;
-  position: absolute;
-}
-
-#hud {
-  margin: 10px;
-  font-size: 18px;
+.bola{
+  width:14px;
+  height:14px;
+  background:white;
+  border-radius:50%;
+  position:absolute;
 }
 </style>
 </head>
 
 <body>
 
-<!-- TELA DE ESCOLHA -->
+<!-- MENU -->
 <div id="menu">
-  <h2>⚽ Escolha seu time</h2>
-  <button onclick="escolher('fantasma')">👻 Fantasma FC</button><br>
-  <button onclick="escolher('praia')">🐉 Praia do Dragão</button><br>
-  <button onclick="escolher('gamers')">🎮 Gamers</button><br>
-  <button onclick="escolher('raio')">❄️ Raio de Gelo</button>
+  <h2>🏆 Campeonato</h2>
+  <p>Escolha seu time</p>
+  <button onclick="start('Fantasma FC')">Fantasma FC</button><br>
+  <button onclick="start('Praia do Dragão')">Praia do Dragão</button><br>
+  <button onclick="start('Gamers')">Gamers</button><br>
+  <button onclick="start('Raio de Gelo')">Raio de Gelo</button>
 </div>
 
 <!-- JOGO -->
 <div id="jogo" class="hidden">
-
-  <div id="hud">
-    ⏱️ <span id="tempo">120</span>s |
-    <span id="placar">0 x 0</span>
-  </div>
+  <h3 id="partida"></h3>
+  <h2 id="placar">0 x 0</h2>
 
   <div id="campo">
-    <div class="gol" id="golsup"></div>
-    <div class="gol" id="golinf"></div>
-
     <div class="bola" id="bola"></div>
-
-    <div class="jogador" id="j1"></div>
-    <div class="jogador" id="j2"></div>
-
-    <div class="cpu" id="cpu1"></div>
-    <div class="cpu" id="cpu2"></div>
-
-    <div class="gk" id="gk1">GK</div>
-    <div class="gk" id="gk2">GK</div>
+    <div class="jogador" id="j1">JP<br>11</div>
+    <div class="jogador" id="j2">Ninho<br>10</div>
+    <div class="cpu" id="cpu1">CPU</div>
+    <div class="cpu" id="cpu2">CPU</div>
   </div>
 
   <br>
@@ -116,139 +84,134 @@ button {
   <button onclick="mover(20,0)">➡️</button><br>
   <button onclick="mover(0,20)">⬇️</button><br><br>
 
-  <button onclick="passe()">🔁 Passe</button>
-  <button onclick="chute()">⚽ Chutar</button>
+  <button onclick="passar()">🔁 Passe</button>
+  <button onclick="chutar()">⚽ Chutar</button>
+</div>
 
+<!-- RESULTADOS -->
+<div id="resultado" class="hidden">
+  <h2>📊 Resultados da Rodada</h2>
+  <div id="tabela"></div>
+  <br>
+  <button onclick="proximaRodada()">➡ Próxima rodada</button>
 </div>
 
 <script>
-let timeEscolhido = "";
-let placarMeu = 0;
-let placarCpu = 0;
-let tempo = 120;
+let times = [
+  {nome:"Fantasma FC", pts:0},
+  {nome:"Praia do Dragão", pts:0},
+  {nome:"Gamers", pts:0},
+  {nome:"Raio de Gelo", pts:0}
+];
 
-const times = {
-  fantasma: { cor:"#7a2cff", j1:"JP 11", j2:"Ninho 10" },
-  praia: { cor:"#e53935", j1:"Vanessa 10", j2:"Noah 07" },
-  gamers: { cor:"#00ff7f", j1:"Julia 05", j2:"Dores 10" },
-  raio: { cor:"#00e5ff", j1:"Adriano 09", j2:"Sancho 08" }
-};
+let meuTime="";
+let adversario="";
+let rodada=1;
 
-const j1 = document.getElementById("j1");
-const j2 = document.getElementById("j2");
-const cpu1 = document.getElementById("cpu1");
-const cpu2 = document.getElementById("cpu2");
-const bola = document.getElementById("bola");
-const gk1 = document.getElementById("gk1");
-const gk2 = document.getElementById("gk2");
+let placarMeu=0, placarCpu=0;
 
-let px = 150, py = 400;
-let bx = 155, by = 260;
+let jogadores = [
+  {x:140,y:420,el:document.getElementById("j1")},
+  {x:200,y:420,el:document.getElementById("j2")}
+];
 
-function escolher(t){
-  timeEscolhido = t;
+let atual=0;
+let bola={x:160,y:260};
+
+function start(time){
+  meuTime=time;
+  escolherAdversario();
   document.getElementById("menu").classList.add("hidden");
   document.getElementById("jogo").classList.remove("hidden");
-
-  j1.style.background = times[t].cor;
-  j2.style.background = times[t].cor;
-  j1.innerText = times[t].j1;
-  j2.innerText = times[t].j2;
-
-  cpu1.style.background = "red";
-  cpu2.style.background = "red";
-  cpu1.innerText = "CPU 9";
-  cpu2.innerText = "CPU 8";
-
-  atualizar();
-  setInterval(iaCpu, 600);
-  setInterval(contarTempo, 1000);
+  document.getElementById("partida").innerText =
+    meuTime+" x "+adversario;
+  desenhar();
 }
 
-function atualizar(){
-  j1.style.left = px+"px";
-  j1.style.top = py+"px";
-
-  j2.style.left = (px+40)+"px";
-  j2.style.top = py+"px";
-
-  bola.style.left = bx+"px";
-  bola.style.top = by+"px";
-
-  cpu1.style.left = "140px";
-  cpu1.style.top = "140px";
-  cpu2.style.left = "180px";
-  cpu2.style.top = "180px";
-
-  gk1.style.left = "145px";
-  gk1.style.top = "490px";
-
-  gk2.style.left = "145px";
-  gk2.style.top = "5px";
-
-  document.getElementById("placar").innerText =
-    placarMeu+" x "+placarCpu;
+function escolherAdversario(){
+  let outros = times.filter(t=>t.nome!==meuTime);
+  adversario = outros[Math.floor(Math.random()*outros.length)].nome;
 }
 
 function mover(dx,dy){
-  px += dx;
-  py += dy;
+  let j=jogadores[atual];
+  j.x+=dx; j.y+=dy;
 
-  // empurra a bola
-  if (Math.abs(px-bx)<30 && Math.abs(py-by)<30){
-    bx += dx;
-    by += dy;
+  if(Math.abs(j.x-bola.x)<30 && Math.abs(j.y-bola.y)<30){
+    bola.x+=dx; bola.y+=dy;
   }
-
-  atualizar();
+  desenhar();
 }
 
-function passe(){
-  bx = px + 40;
-  by = py - 40;
-  atualizar();
-}
+function passar(){ atual = atual===0?1:0; }
 
-function chute(){
-  by -= 80;
-
-  if (by < 10){
+function chutar(){
+  bola.y-=80;
+  if(bola.y<10){
     placarMeu++;
-    alert("⚽ GOOOOOL!");
-    resetar();
+    finalizar();
   }
-  atualizar();
+  desenhar();
 }
 
-function iaCpu(){
-  if (by < 200){
-    by += 40;
-    if (by > 480){
-      placarCpu++;
-      alert("❌ Gol do adversário");
-      resetar();
+function finalizar(){
+  // simulação outros jogos
+  times.forEach(t=>{
+    if(t.nome!==meuTime && t.nome!==adversario){
+      let g1=Math.floor(Math.random()*4);
+      let g2=Math.floor(Math.random()*4);
+      if(g1>g2) t.pts+=3;
+      else if(g1==g2) t.pts+=1;
     }
-  }
-  atualizar();
+  });
+
+  let tMeu=times.find(t=>t.nome===meuTime);
+  let tAdv=times.find(t=>t.nome===adversario);
+
+  if(placarMeu>placarCpu){ tMeu.pts+=3; }
+  else if(placarMeu==placarCpu){ tMeu.pts+=1; tAdv.pts+=1; }
+  else{ tAdv.pts+=3; }
+
+  mostrarResultados();
 }
 
-function resetar(){
-  px = 150; py = 400;
-  bx = 155; by = 260;
-  atualizar();
+function mostrarResultados(){
+  document.getElementById("jogo").classList.add("hidden");
+  document.getElementById("resultado").classList.remove("hidden");
+
+  let html="<h3>Tabela</h3>";
+  times.sort((a,b)=>b.pts-a.pts);
+  times.forEach(t=>{
+    html+=`${t.nome} - ${t.pts} pts<br>`;
+  });
+  document.getElementById("tabela").innerHTML=html;
 }
 
-function contarTempo(){
-  tempo--;
-  document.getElementById("tempo").innerText = tempo;
-  if (tempo <= 0){
-    if (placarMeu > placarCpu) alert("🏆 VITÓRIA!");
-    else if (placarMeu < placarCpu) alert("😢 DERROTA!");
-    else alert("🤝 EMPATE!");
-    location.reload();
-  }
+function proximaRodada(){
+  rodada++;
+  placarMeu=0; placarCpu=0;
+  bola.x=160; bola.y=260;
+  escolherAdversario();
+
+  document.getElementById("resultado").classList.add("hidden");
+  document.getElementById("jogo").classList.remove("hidden");
+  document.getElementById("partida").innerText =
+    meuTime+" x "+adversario;
+  desenhar();
+}
+
+function desenhar(){
+  jogadores.forEach(j=>{
+    j.el.style.left=j.x+"px";
+    j.el.style.top=j.y+"px";
+    j.el.style.background="#7a2cff";
+  });
+  document.getElementById("bola").style.left=bola.x+"px";
+  document.getElementById("bola").style.top=bola.y+"px";
+  document.getElementById("placar").innerText =
+    placarMeu+" x "+placarCpu;
 }
 </script>
 
 </body>
-</html>
+  </html>
