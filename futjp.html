@@ -6,12 +6,12 @@
 <title>Fut de Botão JP</title>
 
 <style>
-body{margin:0;background:#0a8f3c;font-family:Arial;overflow:hidden}
+body{margin:0;background:#0b8f3f;font-family:Arial;overflow:hidden}
 #top{
-color:#fff;text-align:center;font-size:22px;
-padding:6px;font-weight:bold
+color:#fff;text-align:center;
+font-size:22px;font-weight:bold;padding:6px
 }
-canvas{display:block;margin:auto;background:#22c55e}
+canvas{display:block;margin:auto;background:#1ecb63}
 #controls{
 position:fixed;bottom:10px;width:100%;
 display:flex;justify-content:space-around
@@ -34,7 +34,7 @@ display:none;text-shadow:3px 3px 8px #000
 <div id="top">⚽ 0 x 0 ⏱️ 2:00</div>
 <div id="gol">GOOOOOL!!!</div>
 
-<canvas id="game" width="360" height="640"></canvas>
+<canvas id="c" width="360" height="640"></canvas>
 
 <div id="controls">
 <button ontouchstart="key='up'" ontouchend="key=''">↑</button>
@@ -45,26 +45,30 @@ display:none;text-shadow:3px 3px 8px #000
 </div>
 
 <script>
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
+const c=document.getElementById("c");
+const ctx=c.getContext("2d");
 
 let key="";
 let time=120;
-let scoreA=0,scoreB=0;
+let scoreA=0, scoreB=0;
 
 const field={x:20,y:20,w:320,h:600};
 
-const goalTop={x:120,y:0,w:120,h:10};
-const goalBottom={x:120,y:630,w:120,h:10};
+const goals=[
+ {x:field.x+10,y:field.y+10,w:60,h:12,team:"B"},
+ {x:field.x+field.w-70,y:field.y+10,w:60,h:12,team:"B"},
+ {x:field.x+10,y:field.y+field.h-22,w:60,h:12,team:"A"},
+ {x:field.x+field.w-70,y:field.y+field.h-22,w:60,h:12,team:"A"}
+];
 
 const ball={x:180,y:320,vx:0,vy:0,r:8};
 
 const players=[
-{x:180,y:520,vx:0,vy:0,r:18,color:"#00e5ff",ai:false},
-{x:120,y:520,vx:0,vy:0,r:18,color:"#7c3aed",ai:false},
+ {x:150,y:500,vx:0,vy:0,r:18,color:"#00e5ff",ai:false},
+ {x:210,y:500,vx:0,vy:0,r:18,color:"#7c3aed",ai:false},
 
-{x:120,y:120,vx:0,vy:0,r:18,color:"#ff4444",ai:true},
-{x:240,y:120,vx:0,vy:0,r:18,color:"#ff9800",ai:true}
+ {x:150,y:140,vx:0,vy:0,r:18,color:"#ff4444",ai:true},
+ {x:210,y:140,vx:0,vy:0,r:18,color:"#ff9800",ai:true}
 ];
 
 function kick(){
@@ -72,9 +76,9 @@ players.forEach(p=>{
 let dx=ball.x-p.x;
 let dy=ball.y-p.y;
 let d=Math.hypot(dx,dy);
-if(d<26){
-ball.vx=dx*0.4;
-ball.vy=dy*0.4;
+if(d<28){
+ball.vx=dx*0.5;
+ball.vy=dy*0.5;
 }
 });
 }
@@ -85,24 +89,36 @@ let dy=b.y-a.y;
 let dist=Math.hypot(dx,dy);
 if(dist<a.r+b.r){
 let nx=dx/dist, ny=dy/dist;
-a.vx-=nx*1.5; a.vy-=ny*1.5;
-b.vx+=nx*1.5; b.vy+=ny*1.5;
+a.vx-=nx*1.2; a.vy-=ny*1.2;
+b.vx+=nx*1.2; b.vy+=ny*1.2;
 }
+}
+
+function goal(team){
+if(team==="A") scoreA++;
+else scoreB++;
+
+document.getElementById("gol").style.display="block";
+setTimeout(()=>{
+document.getElementById("gol").style.display="none";
+ball.x=180; ball.y=320; ball.vx=0; ball.vy=0;
+},1000);
 }
 
 function update(){
 players.forEach(p=>{
 if(!p.ai){
-if(key=="up")p.vy-=0.4;
-if(key=="down")p.vy+=0.4;
-if(key=="left")p.vx-=0.4;
-if(key=="right")p.vx+=0.4;
+if(key=="up")p.vy-=0.5;
+if(key=="down")p.vy+=0.5;
+if(key=="left")p.vx-=0.5;
+if(key=="right")p.vx+=0.5;
 }else{
 let dx=ball.x-p.x;
 let dy=ball.y-p.y;
-p.vx+=dx*0.0008;
-p.vy+=dy*0.0008;
+p.vx+=dx*0.001;
+p.vy+=dy*0.001;
 }
+
 p.x+=p.vx;
 p.y+=p.vy;
 p.vx*=0.92;
@@ -127,36 +143,35 @@ for(let i=0;i<players.length;i++)
 for(let j=i+1;j<players.length;j++)
 collide(players[i],players[j]);
 
-if(ball.y<10 && ball.x>120 && ball.x<240){
-scoreB++; goal();
+goals.forEach(g=>{
+if(ball.x>g.x && ball.x<g.x+g.w &&
+   ball.y>g.y && ball.y<g.y+g.h){
+goal(g.team);
 }
-if(ball.y>630 && ball.x>120 && ball.x<240){
-scoreA++; goal();
-}
-}
-
-function goal(){
-document.getElementById("gol").style.display="block";
-setTimeout(()=>{
-document.getElementById("gol").style.display="none";
-ball.x=180;ball.y=320;ball.vx=0;ball.vy=0;
-},1000);
+});
 }
 
 function draw(){
-ctx.clearRect(0,0,canvas.width,canvas.height);
+ctx.clearRect(0,0,c.width,c.height);
+
+ctx.fillStyle="#1ecb63";
+ctx.fillRect(field.x,field.y,field.w,field.h);
 
 ctx.strokeStyle="#fff";
 ctx.lineWidth=5;
 ctx.strokeRect(field.x,field.y,field.w,field.h);
 
 ctx.beginPath();
-ctx.arc(180,320,60,0,Math.PI*2);
+ctx.moveTo(field.x,field.y+field.h/2);
+ctx.lineTo(field.x+field.w,field.y+field.h/2);
+ctx.stroke();
+
+ctx.beginPath();
+ctx.arc(field.x+field.w/2,field.y+field.h/2,55,0,Math.PI*2);
 ctx.stroke();
 
 ctx.fillStyle="#fff";
-ctx.fillRect(goalTop.x,goalTop.y,goalTop.w,goalTop.h);
-ctx.fillRect(goalBottom.x,goalBottom.y,goalBottom.w,goalBottom.h);
+goals.forEach(g=>ctx.fillRect(g.x,g.y,g.w,g.h));
 
 players.forEach(p=>{
 ctx.beginPath();
@@ -174,7 +189,7 @@ document.getElementById("top").innerHTML=
 `⚽ ${scoreA} x ${scoreB} ⏱️ ${Math.floor(time/60)}:${String(time%60).padStart(2,"0")}`;
 }
 
-setInterval(()=>{if(time>0)time--;},1000);
+setInterval(()=>{ if(time>0) time--; },1000);
 
 function loop(){
 update();
