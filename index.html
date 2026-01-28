@@ -2,160 +2,252 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Futebol JP</title>
 
 <style>
-body{
-  background:#0b6623;
-  color:white;
-  text-align:center;
-  font-family:Arial;
+body {
+  margin: 0;
+  background: #0b5d2a;
+  color: white;
+  font-family: Arial;
+  text-align: center;
 }
-canvas{
-  background:#1f8f4d;
-  border:4px solid white;
+
+.hidden { display: none; }
+
+button {
+  padding: 12px 20px;
+  font-size: 18px;
+  margin: 8px;
+  border-radius: 10px;
+  border: none;
 }
-button{
-  margin:5px;
-  padding:10px 25px;
-  font-size:18px;
-  border-radius:10px;
-  border:none;
+
+#campo {
+  width: 320px;
+  height: 520px;
+  background: #1f8f3f;
+  border: 5px solid white;
+  margin: auto;
+  position: relative;
+}
+
+.linha {
+  position: absolute;
+  border: 3px solid white;
+}
+
+.gol {
+  width: 120px;
+  height: 15px;
+  background: white;
+  position: absolute;
+  left: 100px;
+}
+
+#golsup { top: 0; }
+#golinf { bottom: 0; }
+
+.jogador, .cpu, .gk {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  position: absolute;
+  font-size: 10px;
+  line-height: 32px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.bola {
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+}
+
+#hud {
+  margin: 10px;
+  font-size: 18px;
 }
 </style>
 </head>
 
 <body>
 
-<h2 id="tempo">⏱ 2:00</h2>
-<h2 id="placar">0 x 0</h2>
+<!-- TELA DE ESCOLHA -->
+<div id="menu">
+  <h2>⚽ Escolha seu time</h2>
+  <button onclick="escolher('fantasma')">👻 Fantasma FC</button><br>
+  <button onclick="escolher('praia')">🐉 Praia do Dragão</button><br>
+  <button onclick="escolher('gamers')">🎮 Gamers</button><br>
+  <button onclick="escolher('raio')">❄️ Raio de Gelo</button>
+</div>
 
-<canvas id="campo" width="360" height="520"></canvas><br>
+<!-- JOGO -->
+<div id="jogo" class="hidden">
 
-<button onclick="chutar()">⚽ Chutar</button>
-<button onclick="passar()">➡ Passe</button>
+  <div id="hud">
+    ⏱️ <span id="tempo">120</span>s |
+    <span id="placar">0 x 0</span>
+  </div>
+
+  <div id="campo">
+    <div class="gol" id="golsup"></div>
+    <div class="gol" id="golinf"></div>
+
+    <div class="bola" id="bola"></div>
+
+    <div class="jogador" id="j1"></div>
+    <div class="jogador" id="j2"></div>
+
+    <div class="cpu" id="cpu1"></div>
+    <div class="cpu" id="cpu2"></div>
+
+    <div class="gk" id="gk1">GK</div>
+    <div class="gk" id="gk2">GK</div>
+  </div>
+
+  <br>
+  <button onclick="mover(0,-20)">⬆️</button><br>
+  <button onclick="mover(-20,0)">⬅️</button>
+  <button onclick="mover(20,0)">➡️</button><br>
+  <button onclick="mover(0,20)">⬇️</button><br><br>
+
+  <button onclick="passe()">🔁 Passe</button>
+  <button onclick="chute()">⚽ Chutar</button>
+
+</div>
 
 <script>
-const canvas = document.getElementById("campo");
-const ctx = canvas.getContext("2d");
-
+let timeEscolhido = "";
+let placarMeu = 0;
+let placarCpu = 0;
 let tempo = 120;
-let golsMeu = 0;
-let golsAdv = 0;
 
-let bola = {x:180,y:260,vx:0,vy:0,r:7};
+const times = {
+  fantasma: { cor:"#7a2cff", j1:"JP 11", j2:"Ninho 10" },
+  praia: { cor:"#e53935", j1:"Vanessa 10", j2:"Noah 07" },
+  gamers: { cor:"#00ff7f", j1:"Julia 05", j2:"Dores 10" },
+  raio: { cor:"#00e5ff", j1:"Adriano 09", j2:"Sancho 08" }
+};
 
-let meu = [
-  {x:180,y:420,nome:"JP",num:11,cor:"blue"},
-  {x:130,y:450,nome:"Ninho",num:10,cor:"blue"}
-];
+const j1 = document.getElementById("j1");
+const j2 = document.getElementById("j2");
+const cpu1 = document.getElementById("cpu1");
+const cpu2 = document.getElementById("cpu2");
+const bola = document.getElementById("bola");
+const gk1 = document.getElementById("gk1");
+const gk2 = document.getElementById("gk2");
 
-let adv = [
-  {x:180,y:120,nome:"CPU",num:9,cor:"red"},
-  {x:130,y:150,nome:"CPU",num:8,cor:"red"}
-];
+let px = 150, py = 400;
+let bx = 155, by = 260;
 
-let gkMeu = {x:180,y:500};
-let gkAdv = {x:180,y:20};
+function escolher(t){
+  timeEscolhido = t;
+  document.getElementById("menu").classList.add("hidden");
+  document.getElementById("jogo").classList.remove("hidden");
 
-function chutar(){
-  bola.vy = -9;
-  reagirGoleiro(gkAdv);
-}
+  j1.style.background = times[t].cor;
+  j2.style.background = times[t].cor;
+  j1.innerText = times[t].j1;
+  j2.innerText = times[t].j2;
 
-function passar(){
-  bola.vx = Math.random()<0.5 ? -4 : 4;
-  bola.vy = -3;
-}
+  cpu1.style.background = "red";
+  cpu2.style.background = "red";
+  cpu1.innerText = "CPU 9";
+  cpu2.innerText = "CPU 8";
 
-function reagirGoleiro(gk){
-  let alvo = bola.x;
-  if(Math.random()<0.6){
-    gk.x += (alvo - gk.x)/2;
-  }
+  atualizar();
+  setInterval(iaCpu, 600);
+  setInterval(contarTempo, 1000);
 }
 
 function atualizar(){
-  bola.x += bola.vx;
-  bola.y += bola.vy;
-  bola.vx *= 0.98;
-  bola.vy *= 0.98;
+  j1.style.left = px+"px";
+  j1.style.top = py+"px";
 
-  // ataque adversário automático
-  if(Math.random()<0.01){
-    bola.vy = 8;
-    reagirGoleiro(gkMeu);
-  }
+  j2.style.left = (px+40)+"px";
+  j2.style.top = py+"px";
 
-  // gols
-  if(bola.y < 20){
-    golsMeu++;
-    resetar();
-  }
-  if(bola.y > 500){
-    golsAdv++;
-    resetar();
-  }
+  bola.style.left = bx+"px";
+  bola.style.top = by+"px";
+
+  cpu1.style.left = "140px";
+  cpu1.style.top = "140px";
+  cpu2.style.left = "180px";
+  cpu2.style.top = "180px";
+
+  gk1.style.left = "145px";
+  gk1.style.top = "490px";
+
+  gk2.style.left = "145px";
+  gk2.style.top = "5px";
 
   document.getElementById("placar").innerText =
-    golsMeu + " x " + golsAdv;
+    placarMeu+" x "+placarCpu;
+}
 
-  desenhar();
+function mover(dx,dy){
+  px += dx;
+  py += dy;
+
+  // empurra a bola
+  if (Math.abs(px-bx)<30 && Math.abs(py-by)<30){
+    bx += dx;
+    by += dy;
+  }
+
+  atualizar();
+}
+
+function passe(){
+  bx = px + 40;
+  by = py - 40;
+  atualizar();
+}
+
+function chute(){
+  by -= 80;
+
+  if (by < 10){
+    placarMeu++;
+    alert("⚽ GOOOOOL!");
+    resetar();
+  }
+  atualizar();
+}
+
+function iaCpu(){
+  if (by < 200){
+    by += 40;
+    if (by > 480){
+      placarCpu++;
+      alert("❌ Gol do adversário");
+      resetar();
+    }
+  }
+  atualizar();
 }
 
 function resetar(){
-  bola.x=180;
-  bola.y=260;
-  bola.vx=0;
-  bola.vy=0;
-  gkMeu.x=180;
-  gkAdv.x=180;
+  px = 150; py = 400;
+  bx = 155; by = 260;
+  atualizar();
 }
 
-function desenharJogador(p){
-  ctx.beginPath();
-  ctx.arc(p.x,p.y,12,0,Math.PI*2);
-  ctx.fillStyle=p.cor;
-  ctx.fill();
-  ctx.fillStyle="white";
-  ctx.font="10px Arial";
-  ctx.fillText(p.nome,p.x-18,p.y-16);
-  ctx.fillText(p.num,p.x-6,p.y+4);
-}
-
-function desenhar(){
-  ctx.clearRect(0,0,360,520);
-
-  // gols
-  ctx.fillStyle="white";
-  ctx.fillRect(110,5,140,10);
-  ctx.fillRect(110,505,140,10);
-
-  // bola
-  ctx.beginPath();
-  ctx.arc(bola.x,bola.y,bola.r,0,Math.PI*2);
-  ctx.fillStyle="white";
-  ctx.fill();
-
-  meu.forEach(desenharJogador);
-  adv.forEach(desenharJogador);
-
-  desenharJogador({...gkMeu,cor:"blue",nome:"GK",num:1});
-  desenharJogador({...gkAdv,cor:"red",nome:"GK",num:1});
-}
-
-setInterval(atualizar,20);
-
-// tempo
-setInterval(()=>{
-  if(tempo>0){
-    tempo--;
-    let m = Math.floor(tempo/60);
-    let s = tempo%60;
-    document.getElementById("tempo").innerText =
-      "⏱ "+m+":"+(s<10?"0"+s:s);
+function contarTempo(){
+  tempo--;
+  document.getElementById("tempo").innerText = tempo;
+  if (tempo <= 0){
+    if (placarMeu > placarCpu) alert("🏆 VITÓRIA!");
+    else if (placarMeu < placarCpu) alert("😢 DERROTA!");
+    else alert("🤝 EMPATE!");
+    location.reload();
   }
-},1000);
+}
 </script>
 
 </body>
