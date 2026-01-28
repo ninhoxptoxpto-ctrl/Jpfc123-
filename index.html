@@ -32,7 +32,7 @@ body{
 }
 .jogador{ background:#7a2cff; }
 .cpu{ background:#e53935; }
-.gk{ background:#222; }
+.gk{ background:#111; }
 .bola{
   width:14px;
   height:14px;
@@ -61,8 +61,8 @@ button{
   <div class="jogador" id="j1">JP<br>11</div>
   <div class="jogador" id="j2">Ninho<br>10</div>
 
-  <div class="cpu" id="c1">CPU<br>9</div>
-  <div class="cpu" id="c2">CPU<br>8</div>
+  <div class="cpu" id="c1">CPU</div>
+  <div class="cpu" id="c2">CPU</div>
 
   <div class="gk" id="gkMeu">GK</div>
   <div class="gk" id="gkCpu">GK</div>
@@ -90,7 +90,10 @@ let cpu=[
 ];
 
 let jogadorAtual=0;
-let bola={x:0,y:0,com:true};
+let bola={x:0,y:0,com:true,velY:0};
+
+let gkMeu={x:140,y:470};
+let gkCpu={x:140,y:10};
 
 let placarMeu=0, placarCpu=0;
 let tempo=80;
@@ -98,7 +101,7 @@ let tempo=80;
 function atualizarBola(){
   if(bola.com){
     let j=jogadores[jogadorAtual];
-    bola.x=j.x+10;
+    bola.x=j.x+11;
     bola.y=j.y-10;
   }
 }
@@ -116,16 +119,16 @@ function desenhar(){
     el.style.top=c.y+"px";
   });
 
+  document.getElementById("gkMeu").style.left=gkMeu.x+"px";
+  document.getElementById("gkMeu").style.top=gkMeu.y+"px";
+
+  document.getElementById("gkCpu").style.left=gkCpu.x+"px";
+  document.getElementById("gkCpu").style.top=gkCpu.y+"px";
+
   atualizarBola();
 
   document.getElementById("bola").style.left=bola.x+"px";
   document.getElementById("bola").style.top=bola.y+"px";
-
-  document.getElementById("gkMeu").style.left="140px";
-  document.getElementById("gkMeu").style.top="470px";
-
-  document.getElementById("gkCpu").style.left="140px";
-  document.getElementById("gkCpu").style.top="10px";
 
   document.getElementById("placar").innerText =
     placarMeu+" x "+placarCpu;
@@ -143,40 +146,49 @@ function passar(){
 }
 
 function chutar(){
+  if(!bola.com) return;
+
   bola.com=false;
-
-  let chute=setInterval(()=>{
-    bola.y-=12;
-    desenhar();
-
-    if(bola.y<20){
-      clearInterval(chute);
-      placarMeu++;
-      alert("⚽ GOL!");
-      bola.com=true;
-      desenhar();
-    }
-  },30);
+  bola.velY = -12;
 }
 
-/* MOVIMENTO DO ADVERSÁRIO */
+/* LOOP PRINCIPAL */
 setInterval(()=>{
-  cpu.forEach(c=>{
-    if(bola.y < c.y){
-      c.y -= 2;
-    }else{
-      c.y += 2;
+  // bola
+  if(!bola.com){
+    bola.y += bola.velY;
+
+    // goleiro CPU se mexe quando a bola vem
+    if(bola.velY < 0){
+      if(bola.x > gkCpu.x) gkCpu.x += 4;
+      if(bola.x < gkCpu.x) gkCpu.x -= 4;
     }
 
-    if(bola.x < c.x){
-      c.x -= 2;
-    }else{
-      c.x += 2;
+    // defesa
+    if(
+      bola.y < 40 &&
+      Math.abs(bola.x - gkCpu.x) < 25
+    ){
+      bola.com=true;
+      bola.velY=0;
     }
+
+    // gol
+    if(bola.y < 0){
+      placarMeu++;
+      bola.com=true;
+      bola.velY=0;
+    }
+  }
+
+  // cpu anda
+  cpu.forEach(c=>{
+    c.y += (bola.y < c.y ? -1.5 : 1.5);
+    c.x += (bola.x < c.x ? -1.5 : 1.5);
   });
 
   desenhar();
-},60);
+},30);
 
 /* TEMPO */
 setInterval(()=>{
@@ -192,4 +204,4 @@ desenhar();
 </script>
 
 </body>
-</html>
+  </html>
