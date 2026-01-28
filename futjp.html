@@ -2,200 +2,216 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fut de Botão JP</title>
-
 <style>
-body{margin:0;background:#0b8f3f;font-family:Arial;overflow:hidden}
-#top{
-color:#fff;text-align:center;
-font-size:22px;font-weight:bold;padding:6px
+body {
+  margin: 0;
+  background: #0a7a3a;
+  overflow: hidden;
+  font-family: Arial;
 }
-canvas{display:block;margin:auto;background:#1ecb63}
-#controls{
-position:fixed;bottom:10px;width:100%;
-display:flex;justify-content:space-around
+
+#ui {
+  position: absolute;
+  top: 5px;
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-size: 22px;
+  font-weight: bold;
 }
-button{
-width:65px;height:65px;border-radius:50%;
-border:none;font-size:22px
+
+canvas {
+  background: #1fbf63;
+  display: block;
+  margin: 0 auto;
 }
-#gol{
-position:fixed;top:40%;width:100%;
-text-align:center;font-size:50px;
-color:yellow;font-weight:bold;
-display:none;text-shadow:3px 3px 8px #000
+
+.controls {
+  position: absolute;
+  bottom: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: white;
+  font-size: 22px;
+  border: none;
 }
 </style>
 </head>
 
 <body>
 
-<div id="top">⚽ 0 x 0 ⏱️ 2:00</div>
-<div id="gol">GOOOOOL!!!</div>
+<div id="ui">⚽ 0 x 0 ⏱ 2:00</div>
 
-<canvas id="c" width="360" height="640"></canvas>
+<canvas id="game" width="360" height="640"></canvas>
 
-<div id="controls">
-<button ontouchstart="key='up'" ontouchend="key=''">↑</button>
-<button ontouchstart="key='left'" ontouchend="key=''">←</button>
-<button ontouchstart="key='right'" ontouchend="key=''">→</button>
-<button ontouchstart="key='down'" ontouchend="key=''">↓</button>
-<button ontouchstart="kick()">⚽</button>
+<div class="controls">
+  <button class="btn" id="up">↑</button>
+  <button class="btn" id="left">←</button>
+  <button class="btn" id="right">→</button>
+  <button class="btn" id="down">↓</button>
+  <button class="btn" id="kick">⚽</button>
 </div>
 
 <script>
-const c=document.getElementById("c");
-const ctx=c.getContext("2d");
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-let key="";
-let time=120;
-let scoreA=0, scoreB=0;
+let scoreA = 0;
+let scoreB = 0;
+let time = 120;
 
-const field={x:20,y:20,w:320,h:600};
+const field = {
+  x: 20, y: 40,
+  w: 320, h: 560
+};
 
-const goals=[
- {x:field.x+10,y:field.y+10,w:60,h:12,team:"B"},
- {x:field.x+field.w-70,y:field.y+10,w:60,h:12,team:"B"},
- {x:field.x+10,y:field.y+field.h-22,w:60,h:12,team:"A"},
- {x:field.x+field.w-70,y:field.y+field.h-22,w:60,h:12,team:"A"}
-];
+const goalTop = { x: 130, y: 40, w: 100, h: 10 };
+const goalBottom = { x: 130, y: 590, w: 100, h: 10 };
 
-const ball={x:180,y:320,vx:0,vy:0,r:8};
+const ball = {
+  x: 180, y: 320,
+  vx: 0, vy: 0,
+  r: 8
+};
 
-const players=[
- {x:150,y:500,vx:0,vy:0,r:18,color:"#00e5ff",ai:false},
- {x:210,y:500,vx:0,vy:0,r:18,color:"#7c3aed",ai:false},
+const player = {
+  x: 180, y: 500,
+  r: 14,
+  speed: 3,
+  color: "#00e5ff"
+};
 
- {x:150,y:140,vx:0,vy:0,r:18,color:"#ff4444",ai:true},
- {x:210,y:140,vx:0,vy:0,r:18,color:"#ff9800",ai:true}
-];
+const enemy = {
+  x: 180, y: 120,
+  r: 14,
+  color: "#a855f7"
+};
 
-function kick(){
-players.forEach(p=>{
-let dx=ball.x-p.x;
-let dy=ball.y-p.y;
-let d=Math.hypot(dx,dy);
-if(d<28){
-ball.vx=dx*0.5;
-ball.vy=dy*0.5;
-}
-});
-}
+function drawField() {
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(field.x, field.y, field.w, field.h);
 
-function collide(a,b){
-let dx=b.x-a.x;
-let dy=b.y-a.y;
-let dist=Math.hypot(dx,dy);
-if(dist<a.r+b.r){
-let nx=dx/dist, ny=dy/dist;
-a.vx-=nx*1.2; a.vy-=ny*1.2;
-b.vx+=nx*1.2; b.vy+=ny*1.2;
-}
-}
+  ctx.beginPath();
+  ctx.arc(180, 320, 60, 0, Math.PI * 2);
+  ctx.stroke();
 
-function goal(team){
-if(team==="A") scoreA++;
-else scoreB++;
-
-document.getElementById("gol").style.display="block";
-setTimeout(()=>{
-document.getElementById("gol").style.display="none";
-ball.x=180; ball.y=320; ball.vx=0; ball.vy=0;
-},1000);
+  ctx.fillStyle = "white";
+  ctx.fillRect(goalTop.x, goalTop.y, goalTop.w, goalTop.h);
+  ctx.fillRect(goalBottom.x, goalBottom.y, goalBottom.w, goalBottom.h);
 }
 
-function update(){
-players.forEach(p=>{
-if(!p.ai){
-if(key=="up")p.vy-=0.5;
-if(key=="down")p.vy+=0.5;
-if(key=="left")p.vx-=0.5;
-if(key=="right")p.vx+=0.5;
-}else{
-let dx=ball.x-p.x;
-let dy=ball.y-p.y;
-p.vx+=dx*0.001;
-p.vy+=dy*0.001;
+function drawCircle(o) {
+  ctx.beginPath();
+  ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
+  ctx.fillStyle = o.color || "white";
+  ctx.fill();
 }
 
-p.x+=p.vx;
-p.y+=p.vy;
-p.vx*=0.92;
-p.vy*=0.92;
-
-if(p.x<p.r+field.x)p.x=p.r+field.x;
-if(p.x>field.x+field.w-p.r)p.x=field.x+field.w-p.r;
-if(p.y<p.r+field.y)p.y=p.r+field.y;
-if(p.y>field.y+field.h-p.r)p.y=field.y+field.h-p.r;
-});
-
-ball.x+=ball.vx;
-ball.y+=ball.vy;
-ball.vx*=0.99;
-ball.vy*=0.99;
-
-if(ball.x<ball.r+field.x||ball.x>field.x+field.w-ball.r)ball.vx*=-1;
-if(ball.y<ball.r+field.y||ball.y>field.y+field.h-ball.r)ball.vy*=-1;
-
-players.forEach(p=>collide(p,ball));
-for(let i=0;i<players.length;i++)
-for(let j=i+1;j<players.length;j++)
-collide(players[i],players[j]);
-
-goals.forEach(g=>{
-if(ball.x>g.x && ball.x<g.x+g.w &&
-   ball.y>g.y && ball.y<g.y+g.h){
-goal(g.team);
-}
-});
+function resetBall() {
+  ball.x = 180;
+  ball.y = 320;
+  ball.vx = 0;
+  ball.vy = 0;
 }
 
-function draw(){
-ctx.clearRect(0,0,c.width,c.height);
+function updateBall() {
+  ball.x += ball.vx;
+  ball.y += ball.vy;
 
-ctx.fillStyle="#1ecb63";
-ctx.fillRect(field.x,field.y,field.w,field.h);
+  ball.vx *= 0.98;
+  ball.vy *= 0.98;
 
-ctx.strokeStyle="#fff";
-ctx.lineWidth=5;
-ctx.strokeRect(field.x,field.y,field.w,field.h);
+  if (ball.x < field.x + ball.r || ball.x > field.x + field.w - ball.r)
+    ball.vx *= -1;
 
-ctx.beginPath();
-ctx.moveTo(field.x,field.y+field.h/2);
-ctx.lineTo(field.x+field.w,field.y+field.h/2);
-ctx.stroke();
+  if (ball.y < field.y + ball.r || ball.y > field.y + field.h - ball.r)
+    ball.vy *= -1;
 
-ctx.beginPath();
-ctx.arc(field.x+field.w/2,field.y+field.h/2,55,0,Math.PI*2);
-ctx.stroke();
+  if (
+    ball.x > goalTop.x &&
+    ball.x < goalTop.x + goalTop.w &&
+    ball.y < goalTop.y + goalTop.h
+  ) {
+    scoreB++;
+    resetBall();
+  }
 
-ctx.fillStyle="#fff";
-goals.forEach(g=>ctx.fillRect(g.x,g.y,g.w,g.h));
-
-players.forEach(p=>{
-ctx.beginPath();
-ctx.fillStyle=p.color;
-ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-ctx.fill();
-});
-
-ctx.beginPath();
-ctx.fillStyle="#fff";
-ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
-ctx.fill();
-
-document.getElementById("top").innerHTML=
-`⚽ ${scoreA} x ${scoreB} ⏱️ ${Math.floor(time/60)}:${String(time%60).padStart(2,"0")}`;
+  if (
+    ball.x > goalBottom.x &&
+    ball.x < goalBottom.x + goalBottom.w &&
+    ball.y > goalBottom.y
+  ) {
+    scoreA++;
+    resetBall();
+  }
 }
 
-setInterval(()=>{ if(time>0) time--; },1000);
-
-function loop(){
-update();
-draw();
-requestAnimationFrame(loop);
+function collide(p) {
+  let dx = ball.x - p.x;
+  let dy = ball.y - p.y;
+  let dist = Math.hypot(dx, dy);
+  if (dist < ball.r + p.r) {
+    ball.vx = dx * 0.2;
+    ball.vy = dy * 0.2;
+  }
 }
+
+function enemyAI() {
+  enemy.x += (ball.x - enemy.x) * 0.02;
+  enemy.y += (ball.y - enemy.y) * 0.02;
+}
+
+function updateUI() {
+  document.getElementById("ui").innerText =
+    `⚽ ${scoreA} x ${scoreB} ⏱ ${Math.floor(time/60)}:${String(time%60).padStart(2,"0")}`;
+}
+
+setInterval(() => {
+  if (time > 0) time--;
+}, 1000);
+
+function loop() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  drawField();
+
+  updateBall();
+  enemyAI();
+
+  collide(player);
+  collide(enemy);
+
+  drawCircle(ball);
+  drawCircle(player);
+  drawCircle(enemy);
+
+  updateUI();
+
+  requestAnimationFrame(loop);
+}
+
+document.getElementById("up").onclick = () => player.y -= player.speed;
+document.getElementById("down").onclick = () => player.y += player.speed;
+document.getElementById("left").onclick = () => player.x -= player.speed;
+document.getElementById("right").onclick = () => player.x += player.speed;
+
+document.getElementById("kick").onclick = () => {
+  let dx = ball.x - player.x;
+  let dy = ball.y - player.y;
+  ball.vx = dx * 0.4;
+  ball.vy = dy * 0.4;
+};
+
 loop();
 </script>
 
