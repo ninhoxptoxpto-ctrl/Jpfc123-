@@ -2,83 +2,77 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Campeonato Futebol JP</title>
+<title>Futebol JP</title>
 
 <style>
-body {
+body{
   background:#0b6623;
   color:white;
   text-align:center;
   font-family:Arial;
 }
-
-button {
-  padding:12px 25px;
-  font-size:18px;
+canvas{
+  background:#1f8f4d;
+  border:4px solid white;
+}
+button{
   margin:5px;
+  padding:10px 25px;
+  font-size:18px;
   border-radius:10px;
   border:none;
-}
-
-canvas {
-  background:#1e7f3f;
-  border:5px solid white;
-  margin-top:10px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>⚽ Campeonato Futebol</h1>
+<h2 id="tempo">⏱ 2:00</h2>
+<h2 id="placar">0 x 0</h2>
 
-<div id="menu">
-  <h2>Escolha seu time</h2>
-  <button onclick="escolherTime('Raios de Gelo')">❄️ Raios de Gelo</button>
-  <button onclick="escolherTime('Fantasma FC')">👻 Fantasma FC</button>
-  <button onclick="escolherTime('Gamers FC')">🎮 Gamers FC</button>
-  <button onclick="escolherTime('Praia do Dragão')">🐉 Praia do Dragão</button>
-</div>
+<canvas id="campo" width="360" height="520"></canvas><br>
 
-<div id="jogo" style="display:none;">
-  <h2 id="placar">0 x 0</h2>
-  <canvas id="campo" width="600" height="400"></canvas><br>
-  <button onclick="chutar()">⚽ Chutar</button>
-</div>
-
-<audio id="somGol">
-  <source src="https://actions.google.com/sounds/v1/sports/soccer_goal.ogg">
-</audio>
+<button onclick="chutar()">⚽ Chutar</button>
+<button onclick="passar()">➡ Passe</button>
 
 <script>
-let canvas = document.getElementById("campo");
-let ctx = canvas.getContext("2d");
+const canvas = document.getElementById("campo");
+const ctx = canvas.getContext("2d");
 
-let meuTime = "";
-let adversario = "";
+let tempo = 120;
 let golsMeu = 0;
 let golsAdv = 0;
 
-let artilheiro = {};
+let bola = {x:180,y:260,vx:0,vy:0,r:7};
 
-let bola = {x:300,y:300,vx:0,vy:0,r:8};
+let meu = [
+  {x:180,y:420,nome:"JP",num:11,cor:"blue"},
+  {x:130,y:450,nome:"Ninho",num:10,cor:"blue"}
+];
 
-let gol = {x:200,y:10,w:200,h:15};
+let adv = [
+  {x:180,y:120,nome:"CPU",num:9,cor:"red"},
+  {x:130,y:150,nome:"CPU",num:8,cor:"red"}
+];
 
-function escolherTime(time){
-  meuTime = time;
-
-  let times = ["Raios de Gelo","Fantasma FC","Gamers FC","Praia do Dragão"];
-  adversario = times.filter(t=>t!==time)[Math.floor(Math.random()*3)];
-
-  document.getElementById("menu").style.display="none";
-  document.getElementById("jogo").style.display="block";
-
-  alert("Partida:\n" + meuTime + " x " + adversario);
-}
+let gkMeu = {x:180,y:500};
+let gkAdv = {x:180,y:20};
 
 function chutar(){
-  bola.vy = -7;
+  bola.vy = -9;
+  reagirGoleiro(gkAdv);
+}
+
+function passar(){
+  bola.vx = Math.random()<0.5 ? -4 : 4;
+  bola.vy = -3;
+}
+
+function reagirGoleiro(gk){
+  let alvo = bola.x;
+  if(Math.random()<0.6){
+    gk.x += (alvo - gk.x)/2;
+  }
 }
 
 function atualizar(){
@@ -87,21 +81,20 @@ function atualizar(){
   bola.vx *= 0.98;
   bola.vy *= 0.98;
 
-  // GOL
-  if(
-    bola.y < gol.y + gol.h &&
-    bola.x > gol.x &&
-    bola.x < gol.x + gol.w
-  ){
-    document.getElementById("somGol").play();
-    golsMeu++;
-    registrarGol("JP");
-    resetar();
+  // ataque adversário automático
+  if(Math.random()<0.01){
+    bola.vy = 8;
+    reagirGoleiro(gkMeu);
   }
 
-  // gol adversário aleatório
-  if(Math.random() < 0.002){
+  // gols
+  if(bola.y < 20){
+    golsMeu++;
+    resetar();
+  }
+  if(bola.y > 500){
     golsAdv++;
+    resetar();
   }
 
   document.getElementById("placar").innerText =
@@ -110,51 +103,59 @@ function atualizar(){
   desenhar();
 }
 
-function registrarGol(jogador){
-  if(!artilheiro[jogador]) artilheiro[jogador]=0;
-  artilheiro[jogador]++;
-}
-
 function resetar(){
-  bola.x=300;
-  bola.y=300;
+  bola.x=180;
+  bola.y=260;
   bola.vx=0;
   bola.vy=0;
+  gkMeu.x=180;
+  gkAdv.x=180;
+}
+
+function desenharJogador(p){
+  ctx.beginPath();
+  ctx.arc(p.x,p.y,12,0,Math.PI*2);
+  ctx.fillStyle=p.cor;
+  ctx.fill();
+  ctx.fillStyle="white";
+  ctx.font="10px Arial";
+  ctx.fillText(p.nome,p.x-18,p.y-16);
+  ctx.fillText(p.num,p.x-6,p.y+4);
 }
 
 function desenhar(){
-  ctx.clearRect(0,0,600,400);
+  ctx.clearRect(0,0,360,520);
 
-  // gol
+  // gols
   ctx.fillStyle="white";
-  ctx.fillRect(gol.x,gol.y,gol.w,gol.h);
+  ctx.fillRect(110,5,140,10);
+  ctx.fillRect(110,505,140,10);
 
   // bola
   ctx.beginPath();
   ctx.arc(bola.x,bola.y,bola.r,0,Math.PI*2);
   ctx.fillStyle="white";
   ctx.fill();
+
+  meu.forEach(desenharJogador);
+  adv.forEach(desenharJogador);
+
+  desenharJogador({...gkMeu,cor:"blue",nome:"GK",num:1});
+  desenharJogador({...gkAdv,cor:"red",nome:"GK",num:1});
 }
 
 setInterval(atualizar,20);
 
-window.onbeforeunload = function(){
-  let resultado = "";
-
-  if(golsMeu > golsAdv) resultado="🏆 Vitória";
-  else if(golsMeu < golsAdv) resultado="❌ Derrota";
-  else resultado="🤝 Empate";
-
-  let art = "";
-  for(let j in artilheiro){
-    art += j + ": " + artilheiro[j] + " gols\n";
+// tempo
+setInterval(()=>{
+  if(tempo>0){
+    tempo--;
+    let m = Math.floor(tempo/60);
+    let s = tempo%60;
+    document.getElementById("tempo").innerText =
+      "⏱ "+m+":"+(s<10?"0"+s:s);
   }
-
-  alert(
-    resultado +
-    "\n\nArtilheiro:\n" + art
-  );
-};
+},1000);
 </script>
 
 </body>
