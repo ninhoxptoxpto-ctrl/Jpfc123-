@@ -2,57 +2,55 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fut de Botão JP</title>
-
+<title>Fut de Botão JP Ultimate</title>
 <style>
 body{
 margin:0;
-background:#0b7a3b;
-overflow:hidden;
+background:#0a6b3a;
 font-family:Arial;
+overflow:hidden;
 }
-
 #ui{
-color:#fff;
+position:absolute;
+top:5px;
+width:100%;
 text-align:center;
+color:white;
 font-size:22px;
 font-weight:bold;
-padding:8px;
 }
-
 canvas{
 display:block;
-margin:0 auto;
-background:#1fc764;
+margin:auto;
+background:#2ecc71;
+border:6px solid white;
 }
-
-.controls{
-position:fixed;
-bottom:110px;
+#controls{
+position:absolute;
+bottom:15px;
 width:100%;
 display:flex;
 justify-content:center;
-gap:12px;
+gap:15px;
 }
-
 .btn{
-width:60px;
-height:60px;
+width:70px;
+height:70px;
 border-radius:50%;
 border:none;
-font-size:22px;
+font-size:26px;
+background:white;
 }
 </style>
 </head>
 
 <body>
 
-<div id="ui">⚽ 0 x 0 ⏱ 2:00</div>
+<div id="ui">⚽ <span id="score">0 x 0</span> ⏱ <span id="time">2:00</span></div>
 
-<canvas id="c"></canvas>
+<canvas id="game" width="420" height="720"></canvas>
 
-<div class="controls">
+<div id="controls">
 <button class="btn" id="up">↑</button>
 <button class="btn" id="left">←</button>
 <button class="btn" id="right">→</button>
@@ -61,170 +59,200 @@ font-size:22px;
 </div>
 
 <script>
-const canvas = document.getElementById("c");
+const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight - 200;
+const W = canvas.width;
+const H = canvas.height;
 
-let time = 120;
 let scoreA = 0;
 let scoreB = 0;
 
+let time = 120;
+
 const field = {
-x: 40,
-y: 40,
-w: canvas.width - 80,
-h: canvas.height - 80
+x:20,y:20,w:380,h:680
 };
 
+const goalW = 140;
+const goalH = 14;
+
 const goalTop = {
-x: field.x + field.w/2 - 80,
-y: field.y,
-w: 160,
-h: 14
+x:field.x + field.w/2 - goalW/2,
+y:field.y - 2,
+w:goalW,
+h:goalH
 };
 
 const goalBottom = {
-x: field.x + field.w/2 - 80,
-y: field.y + field.h - 14,
-w: 160,
-h: 14
+x:field.x + field.w/2 - goalW/2,
+y:field.y + field.h - 12,
+w:goalW,
+h:goalH
 };
 
-const ball = { x: canvas.width/2, y: canvas.height/2, vx:0, vy:0, r:9 };
+const p1 = {x:W/2,y:H-120,r:16,color:"#8e44ad",vx:0,vy:0};
+const p2 = {x:W/2,y:120,r:16,color:"#00d2ff",vx:0,vy:0};
 
-const p1 = { x: canvas.width/2, y: canvas.height - 140, r:18, color:"#00e5ff" };
-const p2 = { x: canvas.width/2, y: 160, r:18, color:"#a855f7" };
+const ball = {x:W/2,y:H/2,r:8,vx:0,vy:0};
 
 function reset(){
-ball.x = canvas.width/2;
-ball.y = canvas.height/2;
-ball.vx = 0;
-ball.vy = 0;
+ball.x=W/2;
+ball.y=H/2;
+ball.vx=0;
+ball.vy=0;
+
+p1.x=W/2;
+p1.y=H-120;
+
+p2.x=W/2;
+p2.y=120;
 }
 
 function drawField(){
-ctx.strokeStyle="#fff";
+ctx.strokeStyle="white";
 ctx.lineWidth=4;
 ctx.strokeRect(field.x,field.y,field.w,field.h);
 
 ctx.beginPath();
-ctx.arc(canvas.width/2,canvas.height/2,60,0,Math.PI*2);
+ctx.arc(W/2,H/2,60,0,Math.PI*2);
 ctx.stroke();
 
-ctx.fillStyle="#fff";
+ctx.beginPath();
+ctx.moveTo(field.x, H/2);
+ctx.lineTo(field.x+field.w, H/2);
+ctx.stroke();
+
+ctx.fillStyle="white";
 ctx.fillRect(goalTop.x,goalTop.y,goalTop.w,goalTop.h);
 ctx.fillRect(goalBottom.x,goalBottom.y,goalBottom.w,goalBottom.h);
 }
 
-function draw(o){
+function drawCircle(o){
 ctx.beginPath();
+ctx.fillStyle=o.color||"white";
 ctx.arc(o.x,o.y,o.r,0,Math.PI*2);
-ctx.fillStyle=o.color||"#fff";
 ctx.fill();
 }
 
-function collide(p){
-let dx = ball.x - p.x;
-let dy = ball.y - p.y;
-let d = Math.hypot(dx,dy);
-if(d < ball.r + p.r){
-ball.vx = dx * 0.5;
-ball.vy = dy * 0.5;
+function collide(a,b){
+let dx=a.x-b.x;
+let dy=a.y-b.y;
+let dist=Math.hypot(dx,dy);
+if(dist<a.r+b.r){
+let angle=Math.atan2(dy,dx);
+let force=4;
+ball.vx=Math.cos(angle)*force;
+ball.vy=Math.sin(angle)*force;
 }
 }
 
-function physics(){
-ball.x += ball.vx;
-ball.y += ball.vy;
+function walls(obj){
+if(obj.x-obj.r<field.x){obj.x=field.x+obj.r;obj.vx*=-0.8;}
+if(obj.x+obj.r>field.x+field.w){obj.x=field.x+field.w-obj.r;obj.vx*=-0.8;}
 
-ball.vx *= 0.97;
-ball.vy *= 0.97;
-
-// paredes laterais e verticais (nada passa)
-if(ball.x < field.x + ball.r){
-ball.x = field.x + ball.r;
-ball.vx *= -1;
+if(obj.y-obj.r<field.y){
+if(obj.x<goalTop.x||obj.x>goalTop.x+goalTop.w){
+obj.y=field.y+obj.r;
+obj.vy*=-0.8;
 }
-if(ball.x > field.x + field.w - ball.r){
-ball.x = field.x + field.w - ball.r;
-ball.vx *= -1;
-}
-if(ball.y < field.y + ball.r){
-ball.y = field.y + ball.r;
-ball.vy *= -1;
-}
-if(ball.y > field.y + field.h - ball.r){
-ball.y = field.y + field.h - ball.r;
-ball.vy *= -1;
 }
 
-// gol cima
-if(
-ball.x > goalTop.x &&
-ball.x < goalTop.x + goalTop.w &&
-ball.y - ball.r <= goalTop.y + goalTop.h
-){
+if(obj.y+obj.r>field.y+field.h){
+if(obj.x<goalBottom.x||obj.x>goalBottom.x+goalBottom.w){
+obj.y=field.y+field.h-obj.r;
+obj.vy*=-0.8;
+}
+}
+}
+
+function update(){
+p1.x+=p1.vx;
+p1.y+=p1.vy;
+p2.x+=p2.vx;
+p2.y+=p2.vy;
+
+ball.x+=ball.vx;
+ball.y+=ball.vy;
+
+p1.vx*=0.9;p1.vy*=0.9;
+p2.vx*=0.9;p2.vy*=0.9;
+ball.vx*=0.99;ball.vy*=0.99;
+
+walls(p1);walls(p2);walls(ball);
+
+collide(p1,ball);
+collide(p2,ball);
+
+// GOLS
+if(ball.y-ball.r<=field.y &&
+ball.x>goalTop.x &&
+ball.x<goalTop.x+goalTop.w){
 scoreB++;
 reset();
 }
 
-// gol baixo
-if(
-ball.x > goalBottom.x &&
-ball.x < goalBottom.x + goalBottom.w &&
-ball.y + ball.r >= goalBottom.y
-){
+if(ball.y+ball.r>=field.y+field.h &&
+ball.x>goalBottom.x &&
+ball.x<goalBottom.x+goalBottom.w){
 scoreA++;
 reset();
 }
+
+document.getElementById("score").innerText=`${scoreA} x ${scoreB}`;
 }
 
-function ai(){
-p2.x += (ball.x - p2.x)*0.02;
-p2.y += (ball.y - p2.y)*0.02;
-}
-
-setInterval(()=>{
-if(time>0) time--;
-},1000);
-
-function ui(){
-document.getElementById("ui").innerText =
-`⚽ ${scoreA} x ${scoreB} ⏱ ${Math.floor(time/60)}:${String(time%60).padStart(2,"0")}`;
+function draw(){
+ctx.clearRect(0,0,W,H);
+drawField();
+drawCircle(ball);
+drawCircle(p1);
+drawCircle(p2);
 }
 
 function loop(){
-ctx.clearRect(0,0,canvas.width,canvas.height);
-
-drawField();
-physics();
-
-collide(p1);
-collide(p2);
-ai();
-
-draw(ball);
-draw(p1);
-draw(p2);
-
-ui();
+update();
+draw();
 requestAnimationFrame(loop);
 }
+loop();
 
-document.getElementById("up").onclick=()=>p1.y-=14;
-document.getElementById("down").onclick=()=>p1.y+=14;
-document.getElementById("left").onclick=()=>p1.x-=14;
-document.getElementById("right").onclick=()=>p1.x+=14;
-document.getElementById("kick").onclick=()=>{
-let dx = ball.x - p1.x;
-let dy = ball.y - p1.y;
-ball.vx = dx * 0.8;
-ball.vy = dy * 0.8;
+// BOTÕES
+document.getElementById("up").ontouchstart=()=>p1.vy=-4;
+document.getElementById("down").ontouchstart=()=>p1.vy=4;
+document.getElementById("left").ontouchstart=()=>p1.vx=-4;
+document.getElementById("right").ontouchstart=()=>p1.vx=4;
+
+document.getElementById("kick").ontouchstart=()=>{
+let dx=ball.x-p1.x;
+let dy=ball.y-p1.y;
+let d=Math.hypot(dx,dy);
+if(d<30){
+let a=Math.atan2(dy,dx);
+ball.vx=Math.cos(a)*8;
+ball.vy=Math.sin(a)*8;
+}
 };
 
-loop();
+// IA
+setInterval(()=>{
+let dx=ball.x-p2.x;
+let dy=ball.y-p2.y;
+let ang=Math.atan2(dy,dx);
+p2.vx=Math.cos(ang)*2.2;
+p2.vy=Math.sin(ang)*2.2;
+},30);
+
+// TEMPO
+setInterval(()=>{
+if(time>0){
+time--;
+let m=Math.floor(time/60);
+let s=time%60;
+document.getElementById("time").innerText=`${m}:${s<10?"0"+s:s}`;
+}
+},1000);
 </script>
+
 </body>
 </html>
