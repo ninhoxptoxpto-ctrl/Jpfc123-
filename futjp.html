@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fut de Botão JP</title>
+<title>Fut de Botão JP – 1 Gol</title>
 
 <style>
 body{
@@ -29,7 +29,7 @@ background:#1fc764;
 
 .controls{
 position:fixed;
-bottom:120px; /* BOTÕES MAIS PRA CIMA */
+bottom:110px;
 width:100%;
 display:flex;
 justify-content:center;
@@ -48,7 +48,7 @@ font-size:22px;
 
 <body>
 
-<div id="ui">⚽ 0 x 0 ⏱ 2:00</div>
+<div id="ui">⚽ 0 ⏱ 2:00</div>
 
 <canvas id="c"></canvas>
 
@@ -68,7 +68,7 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight - 200;
 
 let time = 120;
-let g1 = 0, g2 = 0;
+let gols = 0;
 
 const field = {
 x: 40,
@@ -77,13 +77,29 @@ w: canvas.width - 80,
 h: canvas.height - 80
 };
 
-const goalTop = { x: field.x + field.w/2 - 70, y: field.y, w: 140, h: 12 };
-const goalBot = { x: field.x + field.w/2 - 70, y: field.y + field.h - 12, w: 140, h: 12 };
+// 🔥 APENAS UM GOL (EM CIMA)
+const goal = {
+x: field.x + field.w/2 - 80,
+y: field.y,
+w: 160,
+h: 14
+};
 
 const ball = { x: canvas.width/2, y: canvas.height/2, vx:0, vy:0, r:9 };
 
-const blue = { x: canvas.width/2, y: canvas.height-140, r:16, color:"#00e5ff" };
-const purple = { x: canvas.width/2, y: 140, r:16, color:"#a855f7" };
+const player = {
+x: canvas.width/2,
+y: canvas.height - 140,
+r:18,
+color:"#00e5ff"
+};
+
+const enemy = {
+x: canvas.width/2,
+y: 160,
+r:18,
+color:"#a855f7"
+};
 
 function drawField(){
 ctx.strokeStyle="#fff";
@@ -94,9 +110,9 @@ ctx.beginPath();
 ctx.arc(canvas.width/2,canvas.height/2,60,0,Math.PI*2);
 ctx.stroke();
 
+// GOL ÚNICO
 ctx.fillStyle="#fff";
-ctx.fillRect(goalTop.x,goalTop.y,goalTop.w,goalTop.h);
-ctx.fillRect(goalBot.x,goalBot.y,goalBot.w,goalBot.h);
+ctx.fillRect(goal.x,goal.y,goal.w,goal.h);
 }
 
 function draw(o){
@@ -121,14 +137,16 @@ ball.vx *= 0.97;
 ball.vy *= 0.97;
 
 if(ball.x < field.x+ball.r || ball.x > field.x+field.w-ball.r) ball.vx *= -1;
-if(ball.y < field.y+ball.r || ball.y > field.y+field.h-ball.r) ball.vy *= -1;
+if(ball.y > field.y+field.h-ball.r) ball.vy *= -1;
 
-if(ball.x > goalTop.x && ball.x < goalTop.x+goalTop.w && ball.y < goalTop.y+goalTop.h){
-g1++; reset();
-}
-
-if(ball.x > goalBot.x && ball.x < goalBot.x+goalBot.w && ball.y > goalBot.y){
-g2++; reset();
+// ✅ GOL VÁLIDO SÓ EM CIMA
+if(
+ball.x > goal.x &&
+ball.x < goal.x + goal.w &&
+ball.y < goal.y + goal.h
+){
+gols++;
+reset();
 }
 }
 
@@ -137,14 +155,14 @@ let dx = ball.x - p.x;
 let dy = ball.y - p.y;
 let d = Math.hypot(dx,dy);
 if(d < ball.r + p.r){
-ball.vx = dx * 0.35;
-ball.vy = dy * 0.35;
+ball.vx = dx * 0.4;
+ball.vy = dy * 0.4;
 }
 }
 
 function ai(){
-purple.x += (ball.x - purple.x)*0.02;
-purple.y += (ball.y - purple.y)*0.02;
+enemy.x += (ball.x - enemy.x)*0.02;
+enemy.y += (ball.y - enemy.y)*0.02;
 }
 
 setInterval(()=>{
@@ -153,7 +171,7 @@ if(time>0) time--;
 
 function ui(){
 document.getElementById("ui").innerText =
-`⚽ ${g1} x ${g2} ⏱ ${Math.floor(time/60)}:${String(time%60).padStart(2,"0")}`;
+`⚽ ${gols} ⏱ ${Math.floor(time/60)}:${String(time%60).padStart(2,"0")}`;
 }
 
 function loop(){
@@ -162,27 +180,27 @@ ctx.clearRect(0,0,canvas.width,canvas.height);
 drawField();
 physics();
 
-collide(blue);
-collide(purple);
+collide(player);
+collide(enemy);
 ai();
 
 draw(ball);
-draw(blue);
-draw(purple);
+draw(player);
+draw(enemy);
 
 ui();
 requestAnimationFrame(loop);
 }
 
-document.getElementById("up").onclick=()=>blue.y-=12;
-document.getElementById("down").onclick=()=>blue.y+=12;
-document.getElementById("left").onclick=()=>blue.x-=12;
-document.getElementById("right").onclick=()=>blue.x+=12;
+document.getElementById("up").onclick=()=>player.y-=14;
+document.getElementById("down").onclick=()=>player.y+=14;
+document.getElementById("left").onclick=()=>player.x-=14;
+document.getElementById("right").onclick=()=>player.x+=14;
 document.getElementById("kick").onclick=()=>{
-let dx = ball.x - blue.x;
-let dy = ball.y - blue.y;
-ball.vx = dx * 0.6;
-ball.vy = dy * 0.6;
+let dx = ball.x - player.x;
+let dy = ball.y - player.y;
+ball.vx = dx * 0.7;
+ball.vy = dy * 0.7;
 };
 
 loop();
