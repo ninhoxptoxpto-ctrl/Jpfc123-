@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fut de Botão – Campeonato</title>
+<title>Fut de Botão JP</title>
 
 <style>
 body{
@@ -13,8 +13,6 @@ body{
   font-family:Arial;
   text-align:center;
 }
-
-.hidden{display:none}
 
 button{
   padding:14px 22px;
@@ -41,6 +39,8 @@ button{
   font-size:9px;
   line-height:34px;
   font-weight:bold;
+  text-align:center;
+  color:white;
 }
 
 .bola{
@@ -59,14 +59,13 @@ button{
 
 <div id="campo">
 
-  <!-- bola -->
   <div class="bola" id="bola"></div>
 
   <!-- seu time -->
   <div class="jogador" id="j1">JP<br>11</div>
   <div class="jogador" id="j2">Ninho<br>10</div>
 
-  <!-- adversário -->
+  <!-- adversários -->
   <div class="cpu" id="cpu1">ADV<br>9</div>
   <div class="cpu" id="cpu2">ADV<br>8</div>
 
@@ -86,6 +85,15 @@ button{
 <button onclick="chutar()">⚽ Chutar</button>
 
 <script>
+const j1 = document.getElementById("j1");
+const j2 = document.getElementById("j2");
+const cpu1 = document.getElementById("cpu1");
+const cpu2 = document.getElementById("cpu2");
+const gkMeu = document.getElementById("gkMeu");
+const gkCpu = document.getElementById("gkCpu");
+const bolaEl = document.getElementById("bola");
+const placarEl = document.getElementById("placar");
+
 let placarMeu=0, placarCpu=0;
 
 let jogadores=[
@@ -119,21 +127,17 @@ function desenhar(){
 
   gkMeu.style.left=goleiroMeu.x+"px";
   gkMeu.style.top=goleiroMeu.y+"px";
-  gkMeu.style.background="#333";
+  gkMeu.style.background="#222";
 
   gkCpu.style.left=goleiroCpu.x+"px";
   gkCpu.style.top=goleiroCpu.y+"px";
-  gkCpu.style.background="#333";
+  gkCpu.style.background="#222";
 
   bolaEl.style.left=bola.x+"px";
   bolaEl.style.top=bola.y+"px";
 
-  placar.innerText=placarMeu+" x "+placarCpu;
+  placarEl.innerText = placarMeu+" x "+placarCpu;
 }
-
-const bolaEl=document.getElementById("bola");
-const gkMeu=document.getElementById("gkMeu");
-const gkCpu=document.getElementById("gkCpu");
 
 function mover(dx,dy){
   let j=jogadores[atual];
@@ -145,21 +149,20 @@ function mover(dx,dy){
   desenhar();
 }
 
-function passar(){ atual=atual===0?1:0; }
+function passar(){
+  atual = atual===0 ? 1 : 0;
+}
 
 function chutar(){
-  bola.y-=80;
+  bola.y -= 80;
 
-  // defesa do goleiro CPU
-  if(bola.y<40){
+  if(bola.y < 20){
     if(Math.random()<0.5){
-      bola.y=80;
       alert("🧤 Defesa do goleiro!");
-      desenhar();
-      return;
-    }else{
+      bola.y = 60;
+    } else {
       placarMeu++;
-      alert("⚽ GOL!");
+      alert("⚽ GOOOL!");
       resetar();
     }
   }
@@ -173,15 +176,16 @@ function resetar(){
   desenhar();
 }
 
+// ataque adversário
 setInterval(()=>{
-  // adversário tenta chutar
-  if(bola.y<200){
-    bola.y+=30;
-    if(bola.y>470){
+  if(bola.y < 200){
+    bola.y += 25;
+
+    if(bola.y > 480){
       if(Math.random()<0.5){
-        bola.y=420;
-        alert("🧤 Defesa do seu goleiro!");
-      }else{
+        alert("🧤 DEFESA DO SEU GOLEIRO!");
+        bola.y = 430;
+      } else {
         placarCpu++;
         alert("❌ Gol do adversário!");
         resetar();
@@ -189,7 +193,7 @@ setInterval(()=>{
     }
     desenhar();
   }
-},800);
+}, 900);
 
 desenhar();
 </script>
