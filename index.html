@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fut de Botão JP</title>
+<title>Fut de Botão JP - Campeonato</title>
 
 <style>
 body{margin:0;font-family:Arial;background:#0a5c2d;color:white;text-align:center;}
 #campo{width:320px;height:520px;background:#1f8f3f;margin:auto;position:relative;border:5px solid white;}
-.j,.cpu,.gk{width:36px;height:36px;border-radius:50%;position:absolute;font-size:10px;line-height:36px;font-weight:bold;}
+.j,.cpu,.gk{width:36px;height:36px;border-radius:50%;position:absolute;font-size:9px;font-weight:bold;line-height:36px;}
 .j{background:purple;}
 .cpu{background:red;}
 .gk{background:black;}
 .bola{width:14px;height:14px;background:white;border-radius:50%;position:absolute;}
-button{padding:14px 20px;font-size:18px;border:none;border-radius:12px;margin:4px;}
+button{padding:14px 22px;font-size:18px;border:none;border-radius:14px;margin:5px;}
 table{margin:auto;border-collapse:collapse;width:90%;}
 td,th{border:1px solid white;padding:6px;}
 </style>
@@ -25,14 +25,16 @@ td,th{border:1px solid white;padding:6px;}
 
 <div id="menu">
   <h3>Escolha seu time</h3>
-  <button onclick="start('Fantasma FC')">Fantasma FC</button>
-  <button onclick="start('Raio de Gelo')">Raio de Gelo</button>
-  <button onclick="start('Praia do Dragão')">Praia do Dragão</button>
-  <button onclick="start('Gamers')">Gamers</button>
+  <button onclick="escolher('Fantasma FC')">Fantasma FC</button>
+  <button onclick="escolher('Raio de Gelo')">Raio de Gelo</button>
+  <button onclick="escolher('Praia do Dragão')">Praia do Dragão</button>
+  <button onclick="escolher('Gamers')">Gamers</button>
 </div>
 
-<div id="tela" style="display:none">
+<div id="jogo" style="display:none">
   <h3 id="info"></h3>
+  <div>⏱ <span id="tempo">80</span> | <span id="placar">0 x 0</span></div>
+
   <div id="campo">
     <div class="bola" id="bola"></div>
 
@@ -51,33 +53,49 @@ td,th{border:1px solid white;padding:6px;}
   <button onclick="mover(20,0)">➡️</button><br>
   <button onclick="mover(0,20)">⬇️</button><br><br>
 
+  <button onclick="passar()">🔁 Passe</button>
   <button onclick="chutar()">🥅 Chute</button>
 </div>
 
 <div id="tabela" style="display:none"></div>
 
 <script>
-let times=["Fantasma FC","Raio de Gelo","Praia do Dragão","Gamers"];
+const times=["Fantasma FC","Raio de Gelo","Praia do Dragão","Gamers"];
 let pontos={"Fantasma FC":0,"Raio de Gelo":0,"Praia do Dragão":0,"Gamers":0};
-let rodada=1;
+let rodada=0;
 let meuTime="";
+let adversarios=[];
 let meuGol=0,cpuGol=0;
+let tempo=80;
 
-let j1={x:120,y:420};
-let j2={x:180,y:420};
+// posições
+let j1={x:120,y:420}, j2={x:180,y:420};
+let cpu1={x:110,y:160}, cpu2={x:200,y:160};
+let gkMeu={x:140,y:480}, gkCpu={x:140,y:5};
 let atual=0;
 let bola={x:0,y:0,com:true,vy:0};
 
-function start(t){
+function escolher(t){
   meuTime=t;
+  adversarios=times.filter(x=>x!==t);
   document.getElementById("menu").style.display="none";
-  document.getElementById("tela").style.display="block";
-  novaRodada();
+  iniciarRodada();
 }
 
-function novaRodada(){
+function iniciarRodada(){
+  if(rodada>=3){
+    mostrarTabela(true);
+    return;
+  }
+
   meuGol=0; cpuGol=0;
-  document.getElementById("info").innerText="Rodada "+rodada+" — "+meuTime;
+  tempo=80;
+  let adv=adversarios[rodada];
+  document.getElementById("info").innerText=
+    "Rodada "+(rodada+1)+" — "+meuTime+" x "+adv;
+
+  document.getElementById("jogo").style.display="block";
+  document.getElementById("tabela").style.display="none";
   bola.com=true;
 }
 
@@ -85,7 +103,7 @@ function mover(dx,dy){
   let j=atual===0?j1:j2;
   j.x+=dx; j.y+=dy;
 }
-
+function passar(){ atual=atual===0?1:0; }
 function chutar(){
   if(!bola.com)return;
   bola.com=false;
@@ -93,64 +111,102 @@ function chutar(){
 }
 
 setInterval(()=>{
-  if(bola.com){
-    let j=atual===0?j1:j2;
-    bola.x=j.x+11;
-    bola.y=j.y-10;
-  }else{
+  if(!bola.com){
     bola.y+=bola.vy;
-    if(bola.y<10){
-      meuGol++;
+
+    if(bola.y<120){
+      if(bola.x>gkCpu.x) gkCpu.x+=3;
+      if(bola.x<gkCpu.x) gkCpu.x-=3;
+    }
+
+    if(bola.y<40 && Math.abs(bola.x-gkCpu.x)<22){
       bola.com=true;
     }
-    if(bola.y>500){
-      cpuGol++;
-      bola.com=true;
-    }
+
+    if(bola.y<0){ meuGol++; bola.com=true; }
+    if(bola.y>520){ cpuGol++; bola.com=true; }
   }
 
-  document.getElementById("bola").style.left=bola.x+"px";
-  document.getElementById("bola").style.top=bola.y+"px";
+  [cpu1,cpu2].forEach((c,i)=>{
+    let alvoX=bola.x+(i===0?-30:30);
+    if(alvoX<c.x)c.x-=1.2;
+    if(alvoX>c.x)c.x+=1.2;
+    if(bola.y<c.y)c.y-=1.2;
+    if(bola.y>c.y)c.y+=1.2;
+  });
 
+  document.getElementById("placar").innerText=meuGol+" x "+cpuGol;
+  desenhar();
+},30);
+
+function desenhar(){
   document.getElementById("j1").style.left=j1.x+"px";
   document.getElementById("j1").style.top=j1.y+"px";
   document.getElementById("j2").style.left=j2.x+"px";
   document.getElementById("j2").style.top=j2.y+"px";
-},30);
 
-setTimeout(()=>{
-  fimJogo();
-},80000);
+  document.getElementById("c1").style.left=cpu1.x+"px";
+  document.getElementById("c1").style.top=cpu1.y+"px";
+  document.getElementById("c2").style.left=cpu2.x+"px";
+  document.getElementById("c2").style.top=cpu2.y+"px";
+
+  document.getElementById("gkMeu").style.left=gkMeu.x+"px";
+  document.getElementById("gkMeu").style.top=gkMeu.y+"px";
+  document.getElementById("gkCpu").style.left=gkCpu.x+"px";
+  document.getElementById("gkCpu").style.top=gkCpu.y+"px";
+
+  if(bola.com){
+    let j=atual===0?j1:j2;
+    bola.x=j.x+11; bola.y=j.y-10;
+  }
+  document.getElementById("bola").style.left=bola.x+"px";
+  document.getElementById("bola").style.top=bola.y+"px";
+}
+
+setInterval(()=>{
+  tempo--;
+  document.getElementById("tempo").innerText=tempo;
+  if(tempo<=0) fimJogo();
+},1000);
 
 function fimJogo(){
-  document.getElementById("tela").style.display="none";
-  document.getElementById("tabela").style.display="block";
+  document.getElementById("jogo").style.display="none";
 
-  if(meuGol>cpuGol)pontos[meuTime]+=3;
-  else if(meuGol===cpuGol)pontos[meuTime]+=1;
+  let adv=adversarios[rodada];
 
+  if(meuGol>cpuGol) pontos[meuTime]+=3;
+  else if(meuGol===cpuGol){ pontos[meuTime]+=1; pontos[adv]+=1; }
+  else pontos[adv]+=3;
+
+  // simula outros jogos
+  times.forEach(t=>{
+    if(t!==meuTime && t!==adv){
+      pontos[t]+=Math.floor(Math.random()*3);
+    }
+  });
+
+  rodada++;
+  mostrarTabela(false);
+}
+
+function mostrarTabela(final){
   let html="<h3>📊 Tabela</h3><table><tr><th>Time</th><th>Pontos</th></tr>";
   times.forEach(t=>{
     html+=`<tr><td>${t}</td><td>${pontos[t]}</td></tr>`;
   });
   html+="</table>";
 
-  rodada++;
-  if(rodada<=3){
-    html+="<br><button onclick='voltar()'>Próxima rodada</button>";
+  if(final){
+    let campeao=times.sort((a,b)=>pontos[b]-pontos[a])[0];
+    html+="<h2>🏆 Campeão: "+campeao+"</h2>";
   }else{
-    html+="<h2>🏆 Campeão: "+times.sort((a,b)=>pontos[b]-pontos[a])[0]+"</h2>";
+    html+="<br><button onclick='iniciarRodada()'>Próxima rodada</button>";
   }
 
   document.getElementById("tabela").innerHTML=html;
-}
-
-function voltar(){
-  document.getElementById("tabela").style.display="none";
-  document.getElementById("tela").style.display="block";
-  novaRodada();
+  document.getElementById("tabela").style.display="block";
 }
 </script>
 
 </body>
-  </html>
+    </html>
