@@ -7,31 +7,19 @@
 
 <style>
 body{
-
-margin:0;
-
-background:#0a5c2d;
-
-color:white;
-
-font-family:Arial;
-
-text-align:center;
-
+  margin:0;
+  background:#0a5c2d;
+  color:white;
+  font-family:Arial;
+  text-align:center;
 }
 
 canvas{
-
-background:#1f8f3f;
-
-display:block;
-
-margin:auto;
-
-border:5px solid white;
-
-touch-action:none;
-
+  background:#1f8f3f;
+  display:block;
+  margin:auto;
+  border:5px solid white;
+  touch-action:none;
 }
 </style>
 </head>
@@ -45,194 +33,161 @@ touch-action:none;
 
 <script>
 const canvas=document.getElementById("game");
-
 const ctx=canvas.getContext("2d");
 
 let tempo=80;
-
 let meuGol=0, cpuGol=0;
 
 const campo={
-
-w:320,h:520,
-
-golW:120
+  w:320,h:520,
+  golW:120
 };
 
 class Jogador{
-constructor(x,y,cor,nome,num,ia=false){
-this.x=x; this.y=y;
-this.vx=0; this.vy=0;
-this.r=18;
+  constructor(x,y,cor,nome,num,ia=false){
+    this.x=x; this.y=y;
+    this.vx=0; this.vy=0;
+    this.r=18;
+    this.cor=cor;
+    this.nome=nome;
+    this.num=num;
+    this.ia=ia;
+  }
+  draw(){
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    ctx.fillStyle=this.cor;
+    ctx.fill();
 
-this.cor=cor;
-this.nome=nome;
-
-this.num=num;
-this.ia=ia;
-}
-
-draw(){
-
-ctx.beginPath();
-
-ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
-
-ctx.fillStyle=this.cor;
-
-ctx.fill();
-
-ctx.fillStyle="white";
-
-ctx.font="10px Arial";
-
-ctx.textAlign="center";
-
-ctx.fillText(this.num,this.x,this.y+4);
-
-ctx.fillText(this.nome,this.x,this.y-22);
-
-}
+    ctx.fillStyle="white";
+    ctx.font="10px Arial";
+    ctx.textAlign="center";
+    ctx.fillText(this.num,this.x,this.y+4);
+    ctx.fillText(this.nome,this.x,this.y-22);
+  }
 }
 
 class Bola{
-constructor(){
-this.x=160; this.y=260;
-this.vx=0; this.vy=0;
-
-this.r=8;
-
-}
-draw(){
-
-ctx.beginPath();
-ctx.arc(este.x,este.y,este.r,0,Math.PI*2);
-    ctx.fillStyle="branco";
+  constructor(){
+    this.x=160; this.y=260;
+    this.vx=0; this.vy=0;
+    this.r=8;
+  }
+  draw(){
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    ctx.fillStyle="white";
     ctx.fill();
   }
 }
 
-deixe os jogadores=[
-  novo jogador(120.420,"roxo","JP",11),
-  novo jogador(200.420,"roxo","Ninho",10),
+let jogadores=[
+  new Jogador(120,420,"purple","JP",11),
+  new Jogador(200,420,"purple","Ninho",10),
 
-  novo jogador(120.150,"red","Vanessa",10,true),
-  novo jogador(200.150,"red","Noah",7,true)
+  new Jogador(120,150,"red","Vanessa",10,true),
+  new Jogador(200,150,"red","Noah",7,true)
 ];
 
 let gkMeu=new Jogador(160,480,"black","GK","",true);
-deixe gkCpu=new Jogador(160,40,"black","GK","",true);
+let gkCpu=new Jogador(160,40,"black","GK","",true);
 
-deixe bola=new Bola();
+let bola=new Bola();
 
-deixe ativo=0;
-deixe tocar=falso;
+let ativo=0;
+let tocando=false;
 
 canvas.addEventListener("touchstart",e=>{
-  tocando=verdadeiro;
+  tocando=true;
 });
 canvas.addEventListener("touchend",e=>{
-  tocando=falso;
+  tocando=false;
 });
 canvas.addEventListener("touchmove",e=>{
-  deixe r=canvas.getBoundingClientRect();
-  deixe t=e.touches[0];
-  deixe x=t.clientX-r.left;
-  deixe y=t.clientY-r.top;
-  deixe j=jogadores[ativo];
-  j.vx=(x-j.x)*0,1;
-  j.vy=(y-j.y)*0,1;
+  let r=canvas.getBoundingClientRect();
+  let t=e.touches[0];
+  let x=t.clientX-r.left;
+  let y=t.clientY-r.top;
+  let j=jogadores[ativo];
+  j.vx=(x-j.x)*0.1;
+  j.vy=(y-j.y)*0.1;
 });
 
 function colisao(a,b){
-  deixe dx=b.x-a.x;
-  deixe dy = b.y-a.y;
-  deixe dist=Math.hypot(dx,dy);
+  let dx=b.x-a.x;
+  let dy=b.y-a.y;
+  let dist=Math.hypot(dx,dy);
   if(dist<a.r+b.r){
-    deixe ang=Math.atan2(dy,dx);
-    seja força=2,5;
-    b.vx+=Math.cos(ang)*força;
+    let ang=Math.atan2(dy,dx);
+    let forca=2.5;
+    b.vx+=Math.cos(ang)*forca;
     b.vy+=Math.sin(ang)*forca;
   }
 }
 
-função atualização(){
+function update(){
   jogadores.forEach(j=>{
     j.x+=j.vx;
     j.y+=j.vy;
-    j.vx*=0,9;
-    j.vy*=0,9;
+    j.vx*=0.9;
+    j.vy*=0.9;
   });
 
   bola.x+=bola.vx;
   bola.y+=bola.vy;
-  bola.vx*=0,99;
-  bola.vy*=0,99;
+  bola.vx*=0.99;
+  bola.vy*=0.99;
 
   jogadores.forEach(j=>colisao(j,bola));
   colisao(gkMeu,bola);
   colisao(gkCpu,bola);
 
-  //IA simples
+  // IA simples
   jogadores.forEach(j=>{
-    se(j.ia){
-      seja dx=bola.x-j.x;
-      deixe dy=bola.y-j.y;
-      j.vx+=dx*0,002;
-      j.vy+=dy*0,002;
+    if(j.ia){
+      let dx=bola.x-j.x;
+      let dy=bola.y-j.y;
+      j.vx+=dx*0.002;
+      j.vy+=dy*0.002;
     }
   });
 
   // gols
   if(bola.y<0 && Math.abs(bola.x-160)<campo.golW/2){
     meuGol++;
-    reiniciar();
+    reset();
   }
   if(bola.y>campo.h && Math.abs(bola.x-160)<campo.golW/2){
     cpuGol++;
-    reiniciar();
+    reset();
   }
 }
 
-função redefinir(){
+function reset(){
   bola.x=160; bola.y=260;
   bola.vx=0; bola.vy=0;
 }
 
 function draw(){
+  ctx.clearRect(0,0,320,520);
 
-ctx.clearRect(0,0,320,520);
+  // gols
+  ctx.strokeStyle="white";
+  ctx.lineWidth=3;
+  ctx.strokeRect(100,0,120,10);
+  ctx.strokeRect(100,510,120,10);
 
-// gols
-
-ctx.strokeStyle="white";
-
-ctx.lineWidth=3;
-
-ctx.strokeRect(100,0,120,10);
-
-ctx.strokeRect(100,510,120,10);
-
-bola.draw();
-
-jogadores.forEach(j=>j.draw());
-
-gkMeu.draw();
-
-gkCpu.draw();
-
+  bola.draw();
+  jogadores.forEach(j=>j.draw());
+  gkMeu.draw();
+  gkCpu.draw();
 }
 
 function loop(){
-
-update();
-
-draw();
-
-document.getElementById("placar").innerText=meuGol+" x "+cpuGol;
-
-requestAnimationFrame(loop);
-
+  update();
+  draw();
+  document.getElementById("placar").innerText=meuGol+" x "+cpuGol;
+  requestAnimationFrame(loop);
 }
 
 setInterval(()=>{
@@ -240,12 +195,12 @@ setInterval(()=>{
   document.getElementById("tempo").innerText=tempo;
   if(tempo<=0){
     alert("Fim de jogo!\n"+meuGol+" x "+cpuGol);
-    localização.reload();
+    location.reload();
   }
 },1000);
 
-laço();
+loop();
 </script>
 
 </body>
-</html> 
+</html>
