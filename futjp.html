@@ -7,39 +7,37 @@
 
 <style>
 body{margin:0;background:#0b7a3b;font-family:Arial;overflow:hidden}
-button{font-size:18px;padding:12px;border-radius:10px;border:none}
-.menu{
-position:fixed;inset:0;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-gap:15px;
-color:white;
+#top{color:#fff;text-align:center;padding:8px;font-size:18px;font-weight:bold}
+canvas{display:block;margin:auto;background:#1ec95b}
+#controls{
+position:fixed;bottom:10px;width:100%;
+display:flex;justify-content:space-around
 }
-canvas{display:none;background:#1ec95b;margin:auto}
-#controls{display:none;position:fixed;bottom:10px;width:100%;justify-content:space-around}
-.btn{width:64px;height:64px;border-radius:50%}
-#top{display:none;color:white;text-align:center;padding:8px;font-size:18px}
+.btn{
+width:64px;height:64px;border-radius:50%;
+border:none;font-size:22px;background:#fff
+}
+#gol{
+position:fixed;top:45%;width:100%;
+text-align:center;font-size:42px;
+color:yellow;font-weight:bold;
+display:none;text-shadow:3px 3px 8px #000
+}
 </style>
 </head>
 
 <body>
 
-<div id="menu" class="menu">
-<h1>⚽ FUT DE BOTÃO JP</h1>
-<button onclick="startGame('ia')">🤖 1 Jogador</button>
-<button onclick="startGame('2p')">🎮 2 Jogadores</button>
-</div>
+<div id="top">⚽ 0 x 0 | ⏱️ 01:20</div>
+<div id="gol">GOOOOOL!!!</div>
 
-<div id="top">0 x 0 | 02:00</div>
 <canvas id="game" width="360" height="640"></canvas>
 
 <div id="controls">
-<button class="btn" ontouchstart="k1='up'" ontouchend="k1=''">↑</button>
-<button class="btn" ontouchstart="k1='left'" ontouchend="k1=''">←</button>
-<button class="btn" ontouchstart="k1='right'" ontouchend="k1=''">→</button>
-<button class="btn" ontouchstart="k1='down'" ontouchend="k1=''">↓</button>
+<button class="btn" ontouchstart="key='up'" ontouchend="key=''">↑</button>
+<button class="btn" ontouchstart="key='left'" ontouchend="key=''">←</button>
+<button class="btn" ontouchstart="key='right'" ontouchend="key=''">→</button>
+<button class="btn" ontouchstart="key='down'" ontouchend="key=''">↓</button>
 <button class="btn" ontouchstart="kick()">⚽</button>
 </div>
 
@@ -47,32 +45,21 @@ canvas{display:none;background:#1ec95b;margin:auto}
 const c=document.getElementById("game");
 const ctx=c.getContext("2d");
 
-let mode="ia";
-let time=120,scoreA=0,scoreB=0;
-let k1="",k2="";
+let time=80;
+let scoreA=0,scoreB=0;
+let key="";
 
 const field={x:20,y:20,w:320,h:600};
+
 const ball={x:180,y:320,vx:0,vy:0,r:8};
 
-let players=[];
+const players=[
+{x:130,y:520,vx:0,vy:0,r:18,color:"#7b2cff",ai:false},
+{x:230,y:520,vx:0,vy:0,r:18,color:"#00ff9c",ai:false},
 
-function startGame(m){
-mode=m;
-document.getElementById("menu").style.display="none";
-document.getElementById("game").style.display="block";
-document.getElementById("controls").style.display="flex";
-document.getElementById("top").style.display="block";
-
-players=[
-{x:130,y:520,vx:0,vy:0,r:18,color:"#7b2cff",team:0},
-{x:230,y:520,vx:0,vy:0,r:18,color:"#00ff9c",team:0},
-
-{x:130,y:120,vx:0,vy:0,r:18,color:"#ff3333",team:1},
-{x:230,y:120,vx:0,vy:0,r:18,color:"#00e5ff",team:1}
+{x:130,y:120,vx:0,vy:0,r:18,color:"#ff3333",ai:true},
+{x:230,y:120,vx:0,vy:0,r:18,color:"#00e5ff",ai:true}
 ];
-
-update();
-}
 
 function kick(){
 players.forEach(p=>{
@@ -80,8 +67,8 @@ let dx=ball.x-p.x;
 let dy=ball.y-p.y;
 let d=Math.hypot(dx,dy);
 if(d<28){
-ball.vx=dx*0.8;
-ball.vy=dy*0.8;
+ball.vx=dx*0.9;
+ball.vy=dy*0.9;
 }
 });
 }
@@ -92,27 +79,28 @@ let dy=ball.y-p.y;
 let d=Math.hypot(dx,dy)||1;
 p.vx+=dx/d*0.25;
 p.vy+=dy/d*0.25;
-}
 
-function control(){
-let p=players[0];
-if(k1=="up")p.vy-=0.7;
-if(k1=="down")p.vy+=0.7;
-if(k1=="left")p.vx-=0.7;
-if(k1=="right")p.vx+=0.7;
+if(d<26 && Math.random()<0.08){
+ball.vx=dx*0.9;
+ball.vy=dy*0.9;
+}
 }
 
 function move(p){
-p.x+=p.vx;p.y+=p.vy;
-p.vx*=0.93;p.vy*=0.93;
+p.x+=p.vx;
+p.y+=p.vy;
+p.vx*=0.93;
+p.vy*=0.93;
 
 if(p.x-p.r<field.x){p.x=field.x+p.r;p.vx*=-1}
 if(p.x+p.r>field.x+field.w){p.x=field.x+field.w-p.r;p.vx*=-1}
 if(p.y-p.r<field.y){p.y=field.y+p.r;p.vy*=-1}
 if(p.y+p.r>field.y+field.h){p.y=field.y+field.h-p.r;p.vy*=-1}
 
-let dx=ball.x-p.x,dy=ball.y-p.y;
+let dx=ball.x-p.x;
+let dy=ball.y-p.y;
 let d=Math.hypot(dx,dy);
+
 if(d<p.r+ball.r){
 ball.x=p.x+dx/d*(p.r+ball.r);
 ball.y=p.y+dy/d*(p.r+ball.r);
@@ -121,52 +109,38 @@ ball.vy+=dy*0.12;
 }
 }
 
+function control(){
+let p=players[0];
+if(key=="up")p.vy-=0.7;
+if(key=="down")p.vy+=0.7;
+if(key=="left")p.vx-=0.7;
+if(key=="right")p.vx+=0.7;
+}
+
 function drawField(){
 ctx.strokeStyle="#fff";
 ctx.lineWidth=4;
 ctx.strokeRect(field.x,field.y,field.w,field.h);
-ctx.beginPath();ctx.moveTo(20,320);ctx.lineTo(340,320);ctx.stroke();
-ctx.beginPath();ctx.arc(180,320,60,0,Math.PI*2);ctx.stroke();
+
+ctx.beginPath();
+ctx.moveTo(20,320);
+ctx.lineTo(340,320);
+ctx.stroke();
+
+ctx.beginPath();
+ctx.arc(180,320,60,0,Math.PI*2);
+ctx.stroke();
+
 ctx.fillRect(5,280,10,80);
 ctx.fillRect(345,280,10,80);
 }
 
-function update(){
-ctx.clearRect(0,0,360,640);
-
-control();
-
-players.forEach(p=>{
-if(mode=="ia" && p.team==1) ai(p);
-move(p);
-});
-
-ball.x+=ball.vx;ball.y+=ball.vy;
-ball.vx*=0.99;ball.vy*=0.99;
-
-if(ball.y>280&&ball.y<360){
-if(ball.x<5){scoreB++;reset()}
-if(ball.x>355){scoreA++;reset()}
-}
-
-drawField();
-
-players.forEach(p=>{
-ctx.beginPath();
-ctx.fillStyle=p.color;
-ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-ctx.fill();
-});
-
-ctx.beginPath();
-ctx.fillStyle="#fff";
-ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
-ctx.fill();
-
-document.getElementById("top").innerText=
-`${scoreA} x ${scoreB} | ${Math.floor(time/60)}:${String(time%60).padStart(2,"0")}`;
-
-requestAnimationFrame(update);
+function goal(){
+document.getElementById("gol").style.display="block";
+setTimeout(()=>{
+document.getElementById("gol").style.display="none";
+reset();
+},1000);
 }
 
 function reset(){
@@ -177,191 +151,50 @@ players[2].x=130;players[2].y=120;
 players[3].x=230;players[3].y=120;
 }
 
-setInterval(()=>{if(time>0)time--},1000);
-</script>
+function update(){
+ctx.clearRect(0,0,360,640);
 
-</body>
-</html><!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fut de Botão JP</title>
+control();
 
-<style>
-body{margin:0;background:#0b7a3b;font-family:Arial;overflow:hidden}
-button{font-size:18px;padding:12px;border-radius:10px;border:none}
-.menu{
-position:fixed;inset:0;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-gap:15px;
-color:white;
+players.forEach(p=>{
+if(p.ai) ai(p);
+move(p);
+});
+
+ball.x+=ball.vx;
+ball.y+=ball.vy;
+ball.vx*=0.99;
+ball.vy*=0.99;
+
+if(ball.y>280&&ball.y<360){
+if(ball.x<5){scoreB++;goal()}
+if(ball.x>355){scoreA++;goal()}
 }
-canvas{display:none;background:#1ec95b;margin:auto}
-#controls{display:none;position:fixed;bottom:10px;width:100%;justify-content:space-around}
-.btn{width:64px;height:64px;border-radius:50%}
-#top{display:none;color:white;text-align:center;padding:8px;font-size:18px}
-</style>
-</head>
 
-<body>
+drawField();
 
-<div id="menu" class="menu">
-<h1>⚽ FUT DE BOTÃO JP</h1>
-<button onclick="startGame('ia')">🤖 1 Jogador</button>
-<button onclick="startGame('2p')">🎮 2 Jogadores</button>
-</div>
+players.forEach(p=>{
+ctx.beginPath();
+ctx.fillStyle=p.color;
+ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+ctx.fill();
+ctx.stroke();
+});
 
-<div id="top">0 x 0 | 02:00</div>
-<canvas id="game" width="360" height="640"></canvas>
+ctx.beginPath();
+ctx.fillStyle="#fff";
+ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
+ctx.fill();
 
-<div id="controls">
-<button class="btn" ontouchstart="k1='up'" ontouchend="k1=''">↑</button>
-<button class="btn" ontouchstart="k1='left'" ontouchend="k1=''">←</button>
-<button class="btn" ontouchstart="k1='right'" ontouchend="k1=''">→</button>
-<button class="btn" ontouchstart="k1='down'" ontouchend="k1=''">↓</button>
-<button class="btn" ontouchstart="kick()">⚽</button>
-</div>
+document.getElementById("top").innerText=
+`⚽ ${scoreA} x ${scoreB} | ⏱️ ${Math.floor(time/60)}:${String(time%60).padStart(2,"0")}`;
 
-<script>
-const c=document.getElementById("game");
-const ctx=c.getContext("2d");
+requestAnimationFrame(update);
+}
 
-let mode="ia";
-let time=120,scoreA=0,scoreB=0;
-let k1="",k2="";
-
-const field={x:20,y:20,w:320,h:600};
-const ball={x:180,y:320,vx:0,vy:0,r:8};
-
-let players=[];
-
-function startGame(m){
-mode=m;
-document.getElementById("menu").style.display="none";
-document.getElementById("game").style.display="block";
-document.getElementById("controls").style.display="flex";
-document.getElementById("top").style.display="block";
-
-players=[
-{x:130,y:520,vx:0,vy:0,r:18,color:"#7b2cff",team:0},
-{x:230,y:520,vx:0,vy:0,r:18,color:"#00ff9c",team:0},
-
-{x:130,y:120,vx:0,vy:0,r:18,color:"#ff3333",team:1},
-{x:230,y:120,vx:0,vy:0,r:18,color:"#00e5ff",team:1}
-];
+setInterval(()=>{if(time>0)time--},1000);
 
 update();
-}
-
-function kick(){
-players.forEach(p=>{
-let dx=ball.x-p.x;
-let dy=ball.y-p.y;
-let d=Math.hypot(dx,dy);
-if(d<28){
-ball.vx=dx*0.8;
-ball.vy=dy*0.8;
-}
-});
-}
-
-function ai(p){
-let dx=ball.x-p.x;
-let dy=ball.y-p.y;
-let d=Math.hypot(dx,dy)||1;
-p.vx+=dx/d*0.25;
-p.vy+=dy/d*0.25;
-}
-
-function control(){
-let p=players[0];
-if(k1=="up")p.vy-=0.7;
-if(k1=="down")p.vy+=0.7;
-if(k1=="left")p.vx-=0.7;
-if(k1=="right")p.vx+=0.7;
-}
-
-function move(p){
-p.x+=p.vx;p.y+=p.vy;
-p.vx*=0.93;p.vy*=0.93;
-
-if(p.x-p.r<field.x){p.x=field.x+p.r;p.vx*=-1}
-if(p.x+p.r>field.x+field.w){p.x=field.x+field.w-p.r;p.vx*=-1}
-if(p.y-p.r<field.y){p.y=field.y+p.r;p.vy*=-1}
-if(p.y+p.r>field.y+field.h){p.y=field.y+field.h-p.r;p.vy*=-1}
-
-let dx=ball.x-p.x,dy=ball.y-p.y;
-let d=Math.hypot(dx,dy);
-if(d<p.r+ball.r){
-ball.x=p.x+dx/d*(p.r+ball.r);
-ball.y=p.y+dy/d*(p.r+ball.r);
-ball.vx+=dx*0.12;
-ball.vy+=dy*0.12;
-}
-}
-
-function drawField(){
-ctx.strokeStyle="#fff";
-ctx.lineWidth=4;
-ctx.strokeRect(field.x,field.y,field.w,field.h);
-ctx.beginPath();ctx.moveTo(20,320);ctx.lineTo(340,320);ctx.stroke();
-ctx.beginPath();ctx.arc(180,320,60,0,Math.PI*2);ctx.stroke();
-ctx.fillRect(5,280,10,80);
-ctx.fillRect(345,280,10,80);
-}
-
-function update(){
-ctx.clearRect(0,0,360,640);
-
-control();
-
-players.forEach(p=>{
-if(mode=="ia" && p.team==1) ai(p);
-move(p);
-});
-
-ball.x+=ball.vx;ball.y+=ball.vy;
-ball.vx*=0.99;ball.vy*=0.99;
-
-if(ball.y>280&&ball.y<360){
-if(ball.x<5){scoreB++;reset()}
-if(ball.x>355){scoreA++;reset()}
-}
-
-drawField();
-
-players.forEach(p=>{
-ctx.beginPath();
-ctx.fillStyle=p.color;
-ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-ctx.fill();
-});
-
-ctx.beginPath();
-ctx.fillStyle="#fff";
-ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
-ctx.fill();
-
-document.getElementById("top").innerText=
-`${scoreA} x ${scoreB} | ${Math.floor(time/60)}:${String(time%60).padStart(2,"0")}`;
-
-requestAnimationFrame(update);
-}
-
-function reset(){
-ball.x=180;ball.y=320;ball.vx=0;ball.vy=0;
-players[0].x=130;players[0].y=520;
-players[1].x=230;players[1].y=520;
-players[2].x=130;players[2].y=120;
-players[3].x=230;players[3].y=120;
-}
-
-setInterval(()=>{if(time>0)time--},1000);
 </script>
-
 </body>
 </html>
