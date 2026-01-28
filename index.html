@@ -53,7 +53,7 @@ button{
 <body>
 
 <h3>⚽ FUT DE BOTÃO JP</h3>
-<div>⏱️ <span id="tempo">120</span> | <span id="placar">0 x 0</span></div>
+<div>⏱️ <span id="tempo">80</span> | <span id="placar">0 x 0</span></div>
 
 <div id="campo">
   <div class="bola" id="bola"></div>
@@ -80,21 +80,20 @@ button{
 
 <script>
 let jogadores=[
- {nome:"JP",num:11,x:140,y:420},
- {nome:"Ninho",num:10,x:200,y:420}
+ {x:140,y:420},
+ {x:200,y:420}
 ];
 
 let cpu=[
- {x:140,y:140},
- {x:200,y:140}
+ {x:140,y:160},
+ {x:200,y:160}
 ];
 
 let jogadorAtual=0;
-
 let bola={x:0,y:0,com:true};
 
 let placarMeu=0, placarCpu=0;
-let tempo=120;
+let tempo=80;
 
 function atualizarBola(){
   if(bola.com){
@@ -141,7 +140,6 @@ function mover(dx,dy){
 
 function passar(){
   jogadorAtual = jogadorAtual===0 ? 1 : 0;
-  desenhar();
 }
 
 function chutar(){
@@ -156,12 +154,31 @@ function chutar(){
       placarMeu++;
       alert("⚽ GOL!");
       bola.com=true;
-      bola.x=160; bola.y=260;
       desenhar();
     }
   },30);
 }
 
+/* MOVIMENTO DO ADVERSÁRIO */
+setInterval(()=>{
+  cpu.forEach(c=>{
+    if(bola.y < c.y){
+      c.y -= 2;
+    }else{
+      c.y += 2;
+    }
+
+    if(bola.x < c.x){
+      c.x -= 2;
+    }else{
+      c.x += 2;
+    }
+  });
+
+  desenhar();
+},60);
+
+/* TEMPO */
 setInterval(()=>{
   tempo--;
   document.getElementById("tempo").innerText=tempo;
