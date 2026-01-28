@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fut de Botão JP</title>
+
+<style>
+body{
+  margin:0;
+  background:#0b5d2a;
+  font-family:Arial;
+  color:white;
+  text-align:center;
+}
+
+#top{
+  padding:10px;
+  font-size:20px;
+  font-weight:bold;
+}
+
+canvas{
+  background:#1f8f43;
+  border:5px solid #fff;
+  border-radius:12px;
+}
+
+#controles{
+  margin-top:10px;
+}
+
+button{
+  padding:12px 20px;
+  font-size:18px;
+  margin:5px;
+  border:none;
+  border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="top">
+⚽ Fut de Botão JP<br>
+<span id="placar">0 x 0</span> | ⏱️ <span id="tempo">80</span>
+</div>
+
+<canvas id="game" width="320" height="500"></canvas>
+
+<div id="controles">
+<button onclick="chutar()">🥅 Chutar</button>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let tempo = 80;
+let placarA = 0;
+let placarB = 0;
+
+const bola = { x:160, y:250, vx:0, vy:0 };
+
+const timeA = [
+  {x:160,y:420,nome:"JP",num:11,cor:"#7b2cbf"},
+  {x:110,y:460,nome:"Ninho",num:10,cor:"#7b2cbf"}
+];
+
+const timeB = [
+  {x:160,y:80,nome:"Adriano",num:9,cor:"#ff2d2d"},
+  {x:110,y:120,nome:"Sancha",num:8,cor:"#ff2d2d"}
+];
+
+const goleiroA = {x:160,y:480,cor:"#000"};
+const goleiroB = {x:160,y:20,cor:"#000"};
+
+let jogadorAtual = timeA[0];
+
+document.addEventListener("keydown", e=>{
+  if(e.key=="ArrowUp") jogadorAtual.y-=10;
+  if(e.key=="ArrowDown") jogadorAtual.y+=10;
+  if(e.key=="ArrowLeft") jogadorAtual.x-=10;
+  if(e.key=="ArrowRight") jogadorAtual.x+=10;
+});
+
+function chutar(){
+  const dx = bola.x - jogadorAtual.x;
+  const dy = bola.y - jogadorAtual.y;
+  bola.vx = dx * 0.2;
+  bola.vy = dy * 0.2;
+}
+
+function desenharJogador(p){
+  ctx.beginPath();
+  ctx.fillStyle = p.cor;
+  ctx.arc(p.x,p.y,15,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle="white";
+  ctx.font="10px Arial";
+  ctx.fillText(p.num,p.x-5,p.y+4);
+}
+
+function loop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  bola.x += bola.vx;
+  bola.y += bola.vy;
+  bola.vx *= 0.98;
+  bola.vy *= 0.98;
+
+  ctx.beginPath();
+  ctx.fillStyle="white";
+  ctx.arc(bola.x,bola.y,6,0,Math.PI*2);
+  ctx.fill();
+
+  timeA.forEach(desenharJogador);
+  timeB.forEach(desenharJogador);
+
+  ctx.fillStyle="black";
+  ctx.beginPath();
+  ctx.arc(goleiroA.x,goleiroA.y,18,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(goleiroB.x,goleiroB.y,18,0,Math.PI*2);
+  ctx.fill();
+
+  requestAnimationFrame(loop);
+}
+
+setInterval(()=>{
+  tempo--;
+  document.getElementById("tempo").innerText = tempo;
+},1000);
+
+loop();
+</script>
+
+</body>
+</html>
