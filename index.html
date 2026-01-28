@@ -13,165 +13,165 @@ body{
   color:white;
   text-align:center;
 }
+#campo{
+  width:320px;
+  height:520px;
+  background:#1f8f3f;
+  margin:auto;
+  border:5px solid white;
+  position:relative;
+}
+.jogador,.cpu,.gk{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  position:absolute;
+  font-size:9px;
+  font-weight:bold;
+  line-height:36px;
+}
+.jogador{ background:#7a2cff; }
+.cpu{ background:#e53935; }
+.gk{ background:#222; }
+.bola{
+  width:14px;
+  height:14px;
+  background:white;
+  border-radius:50%;
+  position:absolute;
+}
 button{
-  padding:16px 30px;
+  padding:14px 20px;
   font-size:18px;
   border:none;
   border-radius:14px;
-  margin:6px;
-}
-table{
-  margin:auto;
-  border-collapse:collapse;
-  width:90%;
-}
-td,th{
-  border:1px solid white;
-  padding:8px;
+  margin:4px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="menu">
-  <h2>🏆 Campeonato Fut de Botão JP</h2>
-  <p>Escolha seu time</p>
+<h3>⚽ FUT DE BOTÃO JP</h3>
+<div>⏱️ <span id="tempo">120</span> | <span id="placar">0 x 0</span></div>
 
-  <button onclick="escolherTime('Fantasma FC')">👻 Fantasma FC</button><br>
-  <button onclick="escolherTime('Raio de Gelo')">❄️ Raio de Gelo</button><br>
-  <button onclick="escolherTime('Praia do Dragão')">🔥 Praia do Dragão</button><br>
-  <button onclick="escolherTime('Gamers')">🎮 Gamers</button>
+<div id="campo">
+  <div class="bola" id="bola"></div>
+
+  <div class="jogador" id="j1">JP<br>11</div>
+  <div class="jogador" id="j2">Ninho<br>10</div>
+
+  <div class="cpu" id="c1">CPU<br>9</div>
+  <div class="cpu" id="c2">CPU<br>8</div>
+
+  <div class="gk" id="gkMeu">GK</div>
+  <div class="gk" id="gkCpu">GK</div>
 </div>
 
-<div id="campeonato" style="display:none">
-  <h3 id="rodadaTxt"></h3>
-  <button onclick="proximaRodada()">▶ Jogar rodada</button>
-  <h3>📊 Tabela</h3>
-  <table id="tabela"></table>
-</div>
+<br>
+
+<button onclick="mover(0,-20)">⬆️</button><br>
+<button onclick="mover(-20,0)">⬅️</button>
+<button onclick="mover(20,0)">➡️</button><br>
+<button onclick="mover(0,20)">⬇️</button><br><br>
+
+<button onclick="passar()">🔁 Passe</button>
+<button onclick="chutar()">⚽ Chutar</button>
 
 <script>
-let times = [
-  {nome:"Fantasma FC", pts:0},
-  {nome:"Raio de Gelo", pts:0},
-  {nome:"Praia do Dragão", pts:0},
-  {nome:"Gamers", pts:0}
+let jogadores=[
+ {nome:"JP",num:11,x:140,y:420},
+ {nome:"Ninho",num:10,x:200,y:420}
 ];
 
-let jogos = [
-  [[0,1],[2,3]],
-  [[0,2],[1,3]],
-  [[0,3],[1,2]]
+let cpu=[
+ {x:140,y:140},
+ {x:200,y:140}
 ];
 
-let rodada = 0;
-let meuTime = "";
+let jogadorAtual=0;
 
-function escolherTime(t){
-  meuTime = t;
-  document.getElementById("menu").style.display="none";
-  document.getElementById("campeonato").style.display="block";
-  atualizarTabela();
-  document.getElementById("rodadaTxt").innerText = "Rodada 1";
-}
+let bola={x:0,y:0,com:true};
 
-function proximaRodada(){
-  if(rodada < 3){
-    jogos[rodada].forEach(j=>{
-      let a = times[j[0]];
-      let b = times[j[1]];
+let placarMeu=0, placarCpu=0;
+let tempo=120;
 
-      let ga = Math.floor(Math.random()*4);
-      let gb = Math.floor(Math.random()*4);
-
-      if(ga > gb) a.pts += 3;
-      else if(gb > ga) b.pts += 3;
-      else { a.pts++; b.pts++; }
-    });
-
-    rodada++;
-    atualizarTabela();
-
-    if(rodada < 3){
-      document.getElementById("rodadaTxt").innerText =
-        "Rodada " + (rodada + 1);
-    } else {
-      setTimeout(finalizarCampeonato, 500);
-    }
+function atualizarBola(){
+  if(bola.com){
+    let j=jogadores[jogadorAtual];
+    bola.x=j.x+10;
+    bola.y=j.y-10;
   }
 }
 
-function atualizarTabela(){
-  let tabela = document.getElementById("tabela");
-  let ordem = [...times].sort((a,b)=>b.pts-a.pts);
-
-  tabela.innerHTML =
-    "<tr><th>Pos</th><th>Time</th><th>Pontos</th></tr>";
-
-  ordem.forEach((t,i)=>{
-    tabela.innerHTML +=
-      `<tr><td>${i+1}º</td><td>${t.nome}</td><td>${t.pts}</td></tr>`;
+function desenhar(){
+  jogadores.forEach((j,i)=>{
+    let el=document.getElementById("j"+(i+1));
+    el.style.left=j.x+"px";
+    el.style.top=j.y+"px";
   });
+
+  cpu.forEach((c,i)=>{
+    let el=document.getElementById("c"+(i+1));
+    el.style.left=c.x+"px";
+    el.style.top=c.y+"px";
+  });
+
+  atualizarBola();
+
+  document.getElementById("bola").style.left=bola.x+"px";
+  document.getElementById("bola").style.top=bola.y+"px";
+
+  document.getElementById("gkMeu").style.left="140px";
+  document.getElementById("gkMeu").style.top="470px";
+
+  document.getElementById("gkCpu").style.left="140px";
+  document.getElementById("gkCpu").style.top="10px";
+
+  document.getElementById("placar").innerText =
+    placarMeu+" x "+placarCpu;
 }
 
-function finalizarCampeonato(){
-  let ordem = [...times].sort((a,b)=>b.pts-a.pts);
-  let finalistas = [ordem[0], ordem[1]];
-  let campeao = finalistas[Math.floor(Math.random()*2)];
+function mover(dx,dy){
+  let j=jogadores[jogadorAtual];
+  j.x+=dx;
+  j.y+=dy;
+  desenhar();
+}
 
-  window.tabelaFinal = ordem;
+function passar(){
+  jogadorAtual = jogadorAtual===0 ? 1 : 0;
+  desenhar();
+}
 
-  if(campeao.nome === meuTime){
-    document.body.innerHTML = `
-      <div style="
-        height:100vh;
-        background:#0a5c2d;
-        display:flex;
-        flex-direction:column;
-        justify-content:center;
-        align-items:center;
-      ">
-        <div style="font-size:120px">🏆</div>
-        <h1>CAMPEÃO</h1>
-        <h2>${meuTime}</h2>
+function chutar(){
+  bola.com=false;
 
-        <button onclick="verTabelaFinal()">👁️ Ver tabela final</button>
-        <button onclick="location.reload()">🔁 Novo campeonato</button>
-      </div>
-    `;
-  } else {
-    alert("🏆 Campeão: " + campeao.nome);
+  let chute=setInterval(()=>{
+    bola.y-=12;
+    desenhar();
+
+    if(bola.y<20){
+      clearInterval(chute);
+      placarMeu++;
+      alert("⚽ GOL!");
+      bola.com=true;
+      bola.x=160; bola.y=260;
+      desenhar();
+    }
+  },30);
+}
+
+setInterval(()=>{
+  tempo--;
+  document.getElementById("tempo").innerText=tempo;
+  if(tempo<=0){
+    alert("Fim de jogo!");
     location.reload();
   }
-}
+},1000);
 
-function verTabelaFinal(){
-  let html = `
-    <div style="padding-top:30px">
-      <h2>📊 Tabela Final</h2>
-      <table>
-        <tr><th>Pos</th><th>Time</th><th>Pontos</th></tr>
-  `;
-
-  window.tabelaFinal.forEach((t,i)=>{
-    html += `
-      <tr>
-        <td>${i+1}º</td>
-        <td>${t.nome}</td>
-        <td>${t.pts}</td>
-      </tr>
-    `;
-  });
-
-  html += `
-      </table><br>
-      <button onclick="location.reload()">🔁 Novo campeonato</button>
-    </div>
-  `;
-
-  document.body.innerHTML = html;
-}
+desenhar();
 </script>
 
 </body>
