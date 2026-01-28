@@ -2,19 +2,55 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fut de Botão JP</title>
+
 <style>
-body{margin:0;background:#0b7a3b;overflow:hidden;font-family:Arial}
-#ui{color:#fff;text-align:center;font-size:22px;font-weight:bold;padding:6px}
-canvas{display:block;margin:0 auto;background:#1fc764}
-.controls{position:fixed;bottom:10px;width:100%;display:flex;justify-content:center;gap:10px}
-.btn{width:60px;height:60px;border-radius:50%;border:none;font-size:22px}
+body{
+margin:0;
+background:#0b7a3b;
+overflow:hidden;
+font-family:Arial;
+}
+
+#ui{
+color:#fff;
+text-align:center;
+font-size:22px;
+font-weight:bold;
+padding:8px;
+}
+
+canvas{
+display:block;
+margin:0 auto;
+background:#1fc764;
+}
+
+.controls{
+position:fixed;
+bottom:120px; /* BOTÕES MAIS PRA CIMA */
+width:100%;
+display:flex;
+justify-content:center;
+gap:12px;
+}
+
+.btn{
+width:60px;
+height:60px;
+border-radius:50%;
+border:none;
+font-size:22px;
+}
 </style>
 </head>
+
 <body>
 
 <div id="ui">⚽ 0 x 0 ⏱ 2:00</div>
-<canvas id="c" width="360" height="640"></canvas>
+
+<canvas id="c"></canvas>
 
 <div class="controls">
 <button class="btn" id="up">↑</button>
@@ -25,108 +61,128 @@ canvas{display:block;margin:0 auto;background:#1fc764}
 </div>
 
 <script>
-const c=document.getElementById("c"),x=c.getContext("2d");
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
 
-let t=120,ga=0,gb=0;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight - 200;
 
-const field={x:20,y:40,w:320,h:560};
-const goalTop={x:120,y:40,w:120,h:12};
-const goalBot={x:120,y:588,w:120,h:12};
+let time = 120;
+let g1 = 0, g2 = 0;
 
-const ball={x:180,y:320,vx:0,vy:0,r:8};
+const field = {
+x: 40,
+y: 40,
+w: canvas.width - 80,
+h: canvas.height - 80
+};
 
-const teamA=[
-{x:140,y:500,r:14,color:"#00e5ff"},
-{x:220,y:500,r:14,color:"#00e5ff"}
-];
+const goalTop = { x: field.x + field.w/2 - 70, y: field.y, w: 140, h: 12 };
+const goalBot = { x: field.x + field.w/2 - 70, y: field.y + field.h - 12, w: 140, h: 12 };
 
-const teamB=[
-{x:140,y:140,r:14,color:"#a855f7"},
-{x:220,y:140,r:14,color:"#a855f7"}
-];
+const ball = { x: canvas.width/2, y: canvas.height/2, vx:0, vy:0, r:9 };
+
+const blue = { x: canvas.width/2, y: canvas.height-140, r:16, color:"#00e5ff" };
+const purple = { x: canvas.width/2, y: 140, r:16, color:"#a855f7" };
 
 function drawField(){
-x.strokeStyle="#fff";x.lineWidth=4;
-x.strokeRect(field.x,field.y,field.w,field.h);
-x.beginPath();x.arc(180,320,60,0,Math.PI*2);x.stroke();
-x.fillStyle="#fff";
-x.fillRect(goalTop.x,goalTop.y,goalTop.w,goalTop.h);
-x.fillRect(goalBot.x,goalBot.y,goalBot.w,goalBot.h);
+ctx.strokeStyle="#fff";
+ctx.lineWidth=4;
+ctx.strokeRect(field.x,field.y,field.w,field.h);
+
+ctx.beginPath();
+ctx.arc(canvas.width/2,canvas.height/2,60,0,Math.PI*2);
+ctx.stroke();
+
+ctx.fillStyle="#fff";
+ctx.fillRect(goalTop.x,goalTop.y,goalTop.w,goalTop.h);
+ctx.fillRect(goalBot.x,goalBot.y,goalBot.w,goalBot.h);
 }
 
-function circle(o){
-x.beginPath();
-x.arc(o.x,o.y,o.r,0,Math.PI*2);
-x.fillStyle=o.color||"#fff";
-x.fill();
+function draw(o){
+ctx.beginPath();
+ctx.arc(o.x,o.y,o.r,0,Math.PI*2);
+ctx.fillStyle=o.color||"#fff";
+ctx.fill();
 }
 
 function reset(){
-ball.x=180;ball.y=320;ball.vx=0;ball.vy=0;
+ball.x = canvas.width/2;
+ball.y = canvas.height/2;
+ball.vx = 0;
+ball.vy = 0;
 }
 
 function physics(){
-ball.x+=ball.vx;
-ball.y+=ball.vy;
-ball.vx*=0.98;ball.vy*=0.98;
+ball.x += ball.vx;
+ball.y += ball.vy;
 
-if(ball.x<field.x+ball.r||ball.x>field.x+field.w-ball.r)ball.vx*=-1;
-if(ball.y<field.y+ball.r||ball.y>field.y+field.h-ball.r)ball.vy*=-1;
+ball.vx *= 0.97;
+ball.vy *= 0.97;
 
-if(ball.x>goalTop.x&&ball.x<goalTop.x+goalTop.w&&ball.y<goalTop.y+goalTop.h){
-ga++;reset();
-}
-if(ball.x>goalBot.x&&ball.x<goalBot.x+goalBot.w&&ball.y>goalBot.y){
-gb++;reset();
-}
+if(ball.x < field.x+ball.r || ball.x > field.x+field.w-ball.r) ball.vx *= -1;
+if(ball.y < field.y+ball.r || ball.y > field.y+field.h-ball.r) ball.vy *= -1;
+
+if(ball.x > goalTop.x && ball.x < goalTop.x+goalTop.w && ball.y < goalTop.y+goalTop.h){
+g1++; reset();
 }
 
-function hit(p){
-let dx=ball.x-p.x,dy=ball.y-p.y;
-let d=Math.hypot(dx,dy);
-if(d<ball.r+p.r){
-ball.vx=dx*0.25;
-ball.vy=dy*0.25;
+if(ball.x > goalBot.x && ball.x < goalBot.x+goalBot.w && ball.y > goalBot.y){
+g2++; reset();
 }
 }
 
-function ai(p){
-p.x+=(ball.x-p.x)*0.015;
-p.y+=(ball.y-p.y)*0.015;
+function collide(p){
+let dx = ball.x - p.x;
+let dy = ball.y - p.y;
+let d = Math.hypot(dx,dy);
+if(d < ball.r + p.r){
+ball.vx = dx * 0.35;
+ball.vy = dy * 0.35;
+}
 }
 
-setInterval(()=>{if(t>0)t--},1000);
+function ai(){
+purple.x += (ball.x - purple.x)*0.02;
+purple.y += (ball.y - purple.y)*0.02;
+}
+
+setInterval(()=>{
+if(time>0) time--;
+},1000);
 
 function ui(){
-document.getElementById("ui").innerText=
-`⚽ ${ga} x ${gb} ⏱ ${Math.floor(t/60)}:${String(t%60).padStart(2,"0")}`;
+document.getElementById("ui").innerText =
+`⚽ ${g1} x ${g2} ⏱ ${Math.floor(time/60)}:${String(time%60).padStart(2,"0")}`;
 }
 
 function loop(){
-x.clearRect(0,0,c.width,c.height);
-drawField();
+ctx.clearRect(0,0,canvas.width,canvas.height);
 
+drawField();
 physics();
 
-teamA.forEach(p=>hit(p));
-teamB.forEach(p=>{hit(p);ai(p)});
+collide(blue);
+collide(purple);
+ai();
 
-circle(ball);
-teamA.forEach(circle);
-teamB.forEach(circle);
+draw(ball);
+draw(blue);
+draw(purple);
 
 ui();
 requestAnimationFrame(loop);
 }
 
-document.getElementById("up").onclick=()=>teamA[0].y-=4;
-document.getElementById("down").onclick=()=>teamA[0].y+=4;
-document.getElementById("left").onclick=()=>teamA[0].x-=4;
-document.getElementById("right").onclick=()=>teamA[0].x+=4;
+document.getElementById("up").onclick=()=>blue.y-=12;
+document.getElementById("down").onclick=()=>blue.y+=12;
+document.getElementById("left").onclick=()=>blue.x-=12;
+document.getElementById("right").onclick=()=>blue.x+=12;
 document.getElementById("kick").onclick=()=>{
-let dx=ball.x-teamA[0].x;
-let dy=ball.y-teamA[0].y;
-ball.vx=dx*0.5;ball.vy=dy*0.5;
+let dx = ball.x - blue.x;
+let dy = ball.y - blue.y;
+ball.vx = dx * 0.6;
+ball.vy = dy * 0.6;
 };
 
 loop();
