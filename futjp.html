@@ -6,11 +6,12 @@
 <style>
 body{
 margin:0;
-background:#0a6b3a;
+background:#0b6b3a;
 font-family:Arial;
 overflow:hidden;
 }
-#ui{
+
+#top{
 position:absolute;
 top:5px;
 width:100%;
@@ -18,83 +19,100 @@ text-align:center;
 color:white;
 font-size:22px;
 font-weight:bold;
+z-index:10;
 }
+
 canvas{
 display:block;
 margin:auto;
 background:#2ecc71;
 border:6px solid white;
 }
+
 #controls{
 position:absolute;
-bottom:15px;
+bottom:20px;
 width:100%;
 display:flex;
 justify-content:center;
-gap:15px;
+align-items:center;
+gap:20px;
 }
+
+#dir{
+display:grid;
+grid-template-columns:60px 60px 60px;
+grid-template-rows:60px 60px 60px;
+gap:6px;
+}
+
 .btn{
-width:70px;
-height:70px;
+width:60px;
+height:60px;
 border-radius:50%;
 border:none;
-font-size:26px;
+font-size:24px;
 background:white;
+}
+
+#kick{
+width:70px;
+height:70px;
+font-size:28px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="ui">⚽ <span id="score">0 x 0</span> ⏱ <span id="time">2:00</span></div>
+<div id="top">⚽ <span id="score">0 x 0</span> ⏱ <span id="time">2:00</span></div>
 
 <canvas id="game" width="420" height="720"></canvas>
 
 <div id="controls">
+<div id="dir">
+<div></div>
 <button class="btn" id="up">↑</button>
+<div></div>
+
 <button class="btn" id="left">←</button>
+<div></div>
 <button class="btn" id="right">→</button>
+
+<div></div>
 <button class="btn" id="down">↓</button>
+<div></div>
+</div>
+
 <button class="btn" id="kick">⚽</button>
 </div>
 
 <script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+const c = document.getElementById("game");
+const ctx = c.getContext("2d");
 
-const W = canvas.width;
-const H = canvas.height;
+const W = c.width;
+const H = c.height;
 
-let scoreA = 0;
-let scoreB = 0;
+let scoreA=0, scoreB=0;
+let time=120;
 
-let time = 120;
+const field={x:20,y:20,w:380,h:680};
 
-const field = {
-x:20,y:20,w:380,h:680
-};
+const goalW=140, goalH=14;
 
-const goalW = 140;
-const goalH = 14;
+const goalTop={
+x:field.x+field.w/2-goalW/2,
+y:field.y-2,w:goalW,h:goalH};
 
-const goalTop = {
-x:field.x + field.w/2 - goalW/2,
-y:field.y - 2,
-w:goalW,
-h:goalH
-};
+const goalBottom={
+x:field.x+field.w/2-goalW/2,
+y:field.y+field.h-12,w:goalW,h:goalH};
 
-const goalBottom = {
-x:field.x + field.w/2 - goalW/2,
-y:field.y + field.h - 12,
-w:goalW,
-h:goalH
-};
+const p1={x:W/2,y:H-130,r:16,color:"#8e44ad",vx:0,vy:0};
+const p2={x:W/2,y:130,r:16,color:"#00d2ff",vx:0,vy:0};
 
-const p1 = {x:W/2,y:H-120,r:16,color:"#8e44ad",vx:0,vy:0};
-const p2 = {x:W/2,y:120,r:16,color:"#00d2ff",vx:0,vy:0};
-
-const ball = {x:W/2,y:H/2,r:8,vx:0,vy:0};
+const ball={x:W/2,y:H/2,r:8,vx:0,vy:0};
 
 function reset(){
 ball.x=W/2;
@@ -103,10 +121,10 @@ ball.vx=0;
 ball.vy=0;
 
 p1.x=W/2;
-p1.y=H-120;
+p1.y=H-130;
 
 p2.x=W/2;
-p2.y=120;
+p2.y=130;
 }
 
 function drawField(){
@@ -119,50 +137,44 @@ ctx.arc(W/2,H/2,60,0,Math.PI*2);
 ctx.stroke();
 
 ctx.beginPath();
-ctx.moveTo(field.x, H/2);
-ctx.lineTo(field.x+field.w, H/2);
+ctx.moveTo(field.x,H/2);
+ctx.lineTo(field.x+field.w,H/2);
 ctx.stroke();
 
-ctx.fillStyle="white";
 ctx.fillRect(goalTop.x,goalTop.y,goalTop.w,goalTop.h);
 ctx.fillRect(goalBottom.x,goalBottom.y,goalBottom.w,goalBottom.h);
 }
 
-function drawCircle(o){
+function circle(o){
 ctx.beginPath();
 ctx.fillStyle=o.color||"white";
 ctx.arc(o.x,o.y,o.r,0,Math.PI*2);
 ctx.fill();
 }
 
-function collide(a,b){
-let dx=a.x-b.x;
-let dy=a.y-b.y;
-let dist=Math.hypot(dx,dy);
-if(dist<a.r+b.r){
-let angle=Math.atan2(dy,dx);
-let force=4;
-ball.vx=Math.cos(angle)*force;
-ball.vy=Math.sin(angle)*force;
+function wall(o){
+if(o.x-o.r<field.x){o.x=field.x+o.r;o.vx*=-0.8;}
+if(o.x+o.r>field.x+field.w){o.x=field.x+field.w-o.r;o.vx*=-0.8;}
+
+if(o.y-o.r<field.y){
+if(o.x<goalTop.x||o.x>goalTop.x+goalTop.w){
+o.y=field.y+o.r;o.vy*=-0.8;}
+}
+
+if(o.y+o.r>field.y+field.h){
+if(o.x<goalBottom.x||o.x>goalBottom.x+goalBottom.w){
+o.y=field.y+field.h-o.r;o.vy*=-0.8;}
 }
 }
 
-function walls(obj){
-if(obj.x-obj.r<field.x){obj.x=field.x+obj.r;obj.vx*=-0.8;}
-if(obj.x+obj.r>field.x+field.w){obj.x=field.x+field.w-obj.r;obj.vx*=-0.8;}
-
-if(obj.y-obj.r<field.y){
-if(obj.x<goalTop.x||obj.x>goalTop.x+goalTop.w){
-obj.y=field.y+obj.r;
-obj.vy*=-0.8;
-}
-}
-
-if(obj.y+obj.r>field.y+field.h){
-if(obj.x<goalBottom.x||obj.x>goalBottom.x+goalBottom.w){
-obj.y=field.y+field.h-obj.r;
-obj.vy*=-0.8;
-}
+function collide(p){
+let dx=ball.x-p.x;
+let dy=ball.y-p.y;
+let d=Math.hypot(dx,dy);
+if(d<p.r+ball.r){
+let a=Math.atan2(dy,dx);
+ball.vx=Math.cos(a)*6;
+ball.vy=Math.sin(a)*6;
 }
 }
 
@@ -175,39 +187,37 @@ p2.y+=p2.vy;
 ball.x+=ball.vx;
 ball.y+=ball.vy;
 
-p1.vx*=0.9;p1.vy*=0.9;
-p2.vx*=0.9;p2.vy*=0.9;
-ball.vx*=0.99;ball.vy*=0.99;
+p1.vx*=0.85; p1.vy*=0.85;
+p2.vx*=0.90; p2.vy*=0.90;
+ball.vx*=0.99; ball.vy*=0.99;
 
-walls(p1);walls(p2);walls(ball);
+wall(p1); wall(p2); wall(ball);
 
-collide(p1,ball);
-collide(p2,ball);
+collide(p1);
+collide(p2);
 
-// GOLS
+// gols
 if(ball.y-ball.r<=field.y &&
 ball.x>goalTop.x &&
 ball.x<goalTop.x+goalTop.w){
-scoreB++;
-reset();
+scoreB++; reset();
 }
 
 if(ball.y+ball.r>=field.y+field.h &&
 ball.x>goalBottom.x &&
 ball.x<goalBottom.x+goalBottom.w){
-scoreA++;
-reset();
+scoreA++; reset();
 }
 
-document.getElementById("score").innerText=`${scoreA} x ${scoreB}`;
+document.getElementById("score").innerText=scoreA+" x "+scoreB;
 }
 
 function draw(){
 ctx.clearRect(0,0,W,H);
 drawField();
-drawCircle(ball);
-drawCircle(p1);
-drawCircle(p2);
+circle(ball);
+circle(p1);
+circle(p2);
 }
 
 function loop(){
@@ -217,7 +227,7 @@ requestAnimationFrame(loop);
 }
 loop();
 
-// BOTÕES
+// CONTROLES
 document.getElementById("up").ontouchstart=()=>p1.vy=-4;
 document.getElementById("down").ontouchstart=()=>p1.vy=4;
 document.getElementById("left").ontouchstart=()=>p1.vx=-4;
@@ -227,10 +237,10 @@ document.getElementById("kick").ontouchstart=()=>{
 let dx=ball.x-p1.x;
 let dy=ball.y-p1.y;
 let d=Math.hypot(dx,dy);
-if(d<30){
+if(d<35){
 let a=Math.atan2(dy,dx);
-ball.vx=Math.cos(a)*8;
-ball.vy=Math.sin(a)*8;
+ball.vx=Math.cos(a)*10;
+ball.vy=Math.sin(a)*10;
 }
 };
 
@@ -238,10 +248,10 @@ ball.vy=Math.sin(a)*8;
 setInterval(()=>{
 let dx=ball.x-p2.x;
 let dy=ball.y-p2.y;
-let ang=Math.atan2(dy,dx);
-p2.vx=Math.cos(ang)*2.2;
-p2.vy=Math.sin(ang)*2.2;
-},30);
+let a=Math.atan2(dy,dx);
+p2.vx=Math.cos(a)*2.4;
+p2.vy=Math.sin(a)*2.4;
+},40);
 
 // TEMPO
 setInterval(()=>{
@@ -249,7 +259,7 @@ if(time>0){
 time--;
 let m=Math.floor(time/60);
 let s=time%60;
-document.getElementById("time").innerText=`${m}:${s<10?"0"+s:s}`;
+document.getElementById("time").innerText=m+":"+(s<10?"0"+s:s);
 }
 },1000);
 </script>
