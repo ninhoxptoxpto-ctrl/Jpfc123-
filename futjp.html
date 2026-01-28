@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fut de Botão JP – 1 Gol</title>
+<title>Fut de Botão JP</title>
 
 <style>
 body{
@@ -48,7 +48,7 @@ font-size:22px;
 
 <body>
 
-<div id="ui">⚽ 0 ⏱ 2:00</div>
+<div id="ui">⚽ 0 x 0 ⏱ 2:00</div>
 
 <canvas id="c"></canvas>
 
@@ -68,7 +68,8 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight - 200;
 
 let time = 120;
-let gols = 0;
+let scoreA = 0;
+let scoreB = 0;
 
 const field = {
 x: 40,
@@ -77,29 +78,31 @@ w: canvas.width - 80,
 h: canvas.height - 80
 };
 
-// 🔥 APENAS UM GOL (EM CIMA)
-const goal = {
+const goalTop = {
 x: field.x + field.w/2 - 80,
 y: field.y,
 w: 160,
 h: 14
 };
 
+const goalBottom = {
+x: field.x + field.w/2 - 80,
+y: field.y + field.h - 14,
+w: 160,
+h: 14
+};
+
 const ball = { x: canvas.width/2, y: canvas.height/2, vx:0, vy:0, r:9 };
 
-const player = {
-x: canvas.width/2,
-y: canvas.height - 140,
-r:18,
-color:"#00e5ff"
-};
+const p1 = { x: canvas.width/2, y: canvas.height - 140, r:18, color:"#00e5ff" };
+const p2 = { x: canvas.width/2, y: 160, r:18, color:"#a855f7" };
 
-const enemy = {
-x: canvas.width/2,
-y: 160,
-r:18,
-color:"#a855f7"
-};
+function reset(){
+ball.x = canvas.width/2;
+ball.y = canvas.height/2;
+ball.vx = 0;
+ball.vy = 0;
+}
 
 function drawField(){
 ctx.strokeStyle="#fff";
@@ -110,9 +113,9 @@ ctx.beginPath();
 ctx.arc(canvas.width/2,canvas.height/2,60,0,Math.PI*2);
 ctx.stroke();
 
-// GOL ÚNICO
 ctx.fillStyle="#fff";
-ctx.fillRect(goal.x,goal.y,goal.w,goal.h);
+ctx.fillRect(goalTop.x,goalTop.y,goalTop.w,goalTop.h);
+ctx.fillRect(goalBottom.x,goalBottom.y,goalBottom.w,goalBottom.h);
 }
 
 function draw(o){
@@ -122,11 +125,14 @@ ctx.fillStyle=o.color||"#fff";
 ctx.fill();
 }
 
-function reset(){
-ball.x = canvas.width/2;
-ball.y = canvas.height/2;
-ball.vx = 0;
-ball.vy = 0;
+function collide(p){
+let dx = ball.x - p.x;
+let dy = ball.y - p.y;
+let d = Math.hypot(dx,dy);
+if(d < ball.r + p.r){
+ball.vx = dx * 0.5;
+ball.vy = dy * 0.5;
+}
 }
 
 function physics(){
@@ -136,33 +142,48 @@ ball.y += ball.vy;
 ball.vx *= 0.97;
 ball.vy *= 0.97;
 
-if(ball.x < field.x+ball.r || ball.x > field.x+field.w-ball.r) ball.vx *= -1;
-if(ball.y > field.y+field.h-ball.r) ball.vy *= -1;
+// paredes laterais e verticais (nada passa)
+if(ball.x < field.x + ball.r){
+ball.x = field.x + ball.r;
+ball.vx *= -1;
+}
+if(ball.x > field.x + field.w - ball.r){
+ball.x = field.x + field.w - ball.r;
+ball.vx *= -1;
+}
+if(ball.y < field.y + ball.r){
+ball.y = field.y + ball.r;
+ball.vy *= -1;
+}
+if(ball.y > field.y + field.h - ball.r){
+ball.y = field.y + field.h - ball.r;
+ball.vy *= -1;
+}
 
-// ✅ GOL VÁLIDO SÓ EM CIMA
+// gol cima
 if(
-ball.x > goal.x &&
-ball.x < goal.x + goal.w &&
-ball.y < goal.y + goal.h
+ball.x > goalTop.x &&
+ball.x < goalTop.x + goalTop.w &&
+ball.y - ball.r <= goalTop.y + goalTop.h
 ){
-gols++;
+scoreB++;
+reset();
+}
+
+// gol baixo
+if(
+ball.x > goalBottom.x &&
+ball.x < goalBottom.x + goalBottom.w &&
+ball.y + ball.r >= goalBottom.y
+){
+scoreA++;
 reset();
 }
 }
 
-function collide(p){
-let dx = ball.x - p.x;
-let dy = ball.y - p.y;
-let d = Math.hypot(dx,dy);
-if(d < ball.r + p.r){
-ball.vx = dx * 0.4;
-ball.vy = dy * 0.4;
-}
-}
-
 function ai(){
-enemy.x += (ball.x - enemy.x)*0.02;
-enemy.y += (ball.y - enemy.y)*0.02;
+p2.x += (ball.x - p2.x)*0.02;
+p2.y += (ball.y - p2.y)*0.02;
 }
 
 setInterval(()=>{
@@ -171,7 +192,7 @@ if(time>0) time--;
 
 function ui(){
 document.getElementById("ui").innerText =
-`⚽ ${gols} ⏱ ${Math.floor(time/60)}:${String(time%60).padStart(2,"0")}`;
+`⚽ ${scoreA} x ${scoreB} ⏱ ${Math.floor(time/60)}:${String(time%60).padStart(2,"0")}`;
 }
 
 function loop(){
@@ -180,27 +201,27 @@ ctx.clearRect(0,0,canvas.width,canvas.height);
 drawField();
 physics();
 
-collide(player);
-collide(enemy);
+collide(p1);
+collide(p2);
 ai();
 
 draw(ball);
-draw(player);
-draw(enemy);
+draw(p1);
+draw(p2);
 
 ui();
 requestAnimationFrame(loop);
 }
 
-document.getElementById("up").onclick=()=>player.y-=14;
-document.getElementById("down").onclick=()=>player.y+=14;
-document.getElementById("left").onclick=()=>player.x-=14;
-document.getElementById("right").onclick=()=>player.x+=14;
+document.getElementById("up").onclick=()=>p1.y-=14;
+document.getElementById("down").onclick=()=>p1.y+=14;
+document.getElementById("left").onclick=()=>p1.x-=14;
+document.getElementById("right").onclick=()=>p1.x+=14;
 document.getElementById("kick").onclick=()=>{
-let dx = ball.x - player.x;
-let dy = ball.y - player.y;
-ball.vx = dx * 0.7;
-ball.vy = dy * 0.7;
+let dx = ball.x - p1.x;
+let dy = ball.y - p1.y;
+ball.vx = dx * 0.8;
+ball.vy = dy * 0.8;
 };
 
 loop();
