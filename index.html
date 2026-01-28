@@ -4,64 +4,27 @@
 <meta charset="UTF-8">
 <title>Mini Futebol JP</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
-body{
-  margin:0;
-  background:#0b5d2a;
-  font-family:Arial;
-  color:white;
-  text-align:center;
-}
+body{margin:0;background:#0b5d2a;font-family:Arial;color:white;text-align:center}
 #menu{padding:20px}
-select,button{
-  padding:10px;
-  margin:6px;
-  font-size:15px;
-}
+select,button{padding:10px;margin:6px;font-size:15px}
 #campo{
-  width:320px;
-  height:480px;
-  margin:auto;
-  background:#1e7f3f;
-  border:4px solid white;
-  position:relative;
-  display:none;
+  width:320px;height:480px;margin:auto;
+  background:#1e7f3f;border:4px solid white;
+  position:relative;display:none
 }
-.gol{
-  position:absolute;
-  left:100px;
-  width:120px;
-  height:30px;
-  border:3px solid white;
-}
-#golsup{top:0}
-#golinf{bottom:0}
-
+.gol{position:absolute;left:100px;width:120px;height:30px;border:3px solid white}
+#golsup{top:0} #golinf{bottom:0}
 .jogador,.zagueiro,.bola{
-  position:absolute;
-  width:26px;
-  height:26px;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:9px;
-  font-weight:bold;
-  color:white;
+  position:absolute;width:26px;height:26px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:bold;color:white
 }
 .goleiro{
-  position:absolute;
-  width:44px;
-  height:14px;
-  background:black;
-  border-radius:6px;
+  position:absolute;width:44px;height:14px;
+  background:black;border-radius:6px
 }
-.bola{
-  width:12px;
-  height:12px;
-  background:white;
-}
+.bola{width:12px;height:12px;background:white}
 </style>
 </head>
 
@@ -69,7 +32,6 @@ select,button{
 
 <div id="menu">
   <h3>⚽ Escolha os times</h3>
-
   <p>Seu time</p>
   <select id="meuTime">
     <option value="#00e676">Fantasma FC</option>
@@ -84,8 +46,8 @@ select,button{
     <option value="#1565c0">Raios de Gelo</option>
     <option value="#f44336">Praia do Dragão</option>
     <option value="#6a1b9a">Gamers</option>
-  </select>
-  <br>
+  </select><br>
+
   <button onclick="start()">▶️ Jogar</button>
 </div>
 
@@ -132,6 +94,7 @@ const gkAdv={x:140,y:20};
 let atual=1;
 let dono="jogador";
 let anim=false;
+let bolaSolta=false;
 
 /* START */
 function start(){
@@ -152,20 +115,20 @@ function pos(id,o){
 }
 
 function draw(){
-  pos("j1",j1);pos("j2",j2);
-  pos("z1",z1);pos("z2",z2);
-  pos("gkMeu",gkMeu);pos("gkAdv",gkAdv);
+  pos("j1",j1); pos("j2",j2);
+  pos("z1",z1); pos("z2",z2);
+  pos("gkMeu",gkMeu); pos("gkAdv",gkAdv);
   pos("bola",bola);
 }
 
-function jogador(){return atual===1?j1:j2}
+function jogador(){ return atual===1?j1:j2 }
 
 /* MOVIMENTO */
 function move(dx,dy){
   if(anim||dono!=="jogador")return;
   let j=jogador();
-  j.x+=dx;j.y+=dy;
-  bola.x=j.x+7;bola.y=j.y-12;
+  j.x+=dx; j.y+=dy;
+  bola.x=j.x+7; bola.y=j.y-12;
   draw();
 }
 
@@ -173,6 +136,7 @@ function move(dx,dy){
 function passe(){
   if(anim||dono!=="jogador")return;
   anim=true;
+  bolaSolta=true;
   let o=jogador();
   let d=atual===1?j2:j1;
   let i=0;
@@ -184,6 +148,7 @@ function passe(){
     if(i>20){
       clearInterval(it);
       atual=atual===1?2:1;
+      bolaSolta=false;
       anim=false;
     }
   },30);
@@ -193,20 +158,20 @@ function passe(){
 function chutar(){
   if(anim||dono!=="jogador")return;
   anim=true;
+  bolaSolta=true;
   let curva=(Math.random()*6)-3;
   let it=setInterval(()=>{
     bola.y-=14;
     bola.x+=curva;
     draw();
+
     if(colide(bola,gkAdv)){
       if(Math.random()<0.35){
         clearInterval(it);
         alert("⚽ GOL!");
-        reset();
-      }else{
-        clearInterval(it);
-        reset();
       }
+      clearInterval(it);
+      reset();
     }
     if(bola.y<30){
       clearInterval(it);
@@ -225,6 +190,7 @@ function desarme(){
       if(Math.random()<0.65){
         z.tem=false;
         dono="jogador";
+        bolaSolta=false;
         bola.x=j.x+7;
         bola.y=j.y-12;
       }
@@ -243,6 +209,7 @@ setInterval(()=>{
       if(colide(z,bola)){
         z.tem=true;
         dono="adv";
+        bolaSolta=true;
       }
     }else{
       bola.x=z.x+7;
@@ -256,7 +223,7 @@ setInterval(()=>{
 
 /* CHUTE ADVERSÁRIO */
 function chuteAdv(){
-  z1.tem=false;z2.tem=false;
+  z1.tem=false; z2.tem=false;
   let it=setInterval(()=>{
     bola.y+=14;
     draw();
@@ -272,8 +239,9 @@ function chuteAdv(){
   },30);
 }
 
-/* GOLEIROS */
+/* GOLEIROS — SÓ COM BOLA SOLTA */
 setInterval(()=>{
+  if(!bolaSolta) return;
   gkMeu.x+=(bola.x-gkMeu.x)/6;
   gkAdv.x+=(bola.x-gkAdv.x)/14;
   draw();
@@ -285,16 +253,18 @@ function colide(a,b){
 
 /* RESET */
 function reset(){
-  j1.x=130;j1.y=360;
-  j2.x=190;j2.y=360;
-  z1.x=90;z1.y=200;z2.x=210;z2.y=200;
-  bola.x=160;bola.y=330;
+  j1.x=130; j1.y=360;
+  j2.x=190; j2.y=360;
+  z1.x=90; z1.y=200; z1.tem=false;
+  z2.x=210; z2.y=200; z2.tem=false;
+  bola.x=160; bola.y=330;
   dono="jogador";
   atual=1;
   anim=false;
+  bolaSolta=false;
   draw();
 }
 </script>
 
 </body>
-</html>
+      </html>
