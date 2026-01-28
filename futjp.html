@@ -2,173 +2,177 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
+<title>Fut de Botão JP — HaxBall Style</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fut JP</title>
-
 <style>
-body{
-  margin:0;
-  background:#0b5d2a;
-  color:white;
-  font-family:Arial;
-  text-align:center;
-}
-
-button{
-  padding:14px 24px;
-  font-size:18px;
-  border:none;
-  border-radius:14px;
-  margin:8px;
-}
-
-canvas{
-  background:#1f8f43;
-  border:6px solid #fff;
-  border-radius:16px;
-  touch-action:none;
-}
+body{margin:0;background:#0b5;font-family:Arial;text-align:center;color:#fff}
+canvas{background:#1f8f3a;border:6px solid #fff;border-radius:12px}
+button{padding:10px 18px;margin:6px;border:none;border-radius:8px;font-size:16px}
+.menu{padding:20px}
+.hidden{display:none}
 </style>
 </head>
 
 <body>
 
-<div id="menu">
-  <h2>⚽ FUT DE BOTÃO JP</h2>
-
-  <h3>Modo</h3>
-  <button onclick="modo='ia'">🤖 IA</button>
-  <button onclick="modo='2p'">👥 2 Jogadores</button>
-
-  <h3>Força do Time</h3>
-  <button onclick="forca=1">🟢 Fraco</button>
-  <button onclick="forca=2">🟡 Médio</button>
-  <button onclick="forca=3">🔴 Forte</button>
-
-  <br><br>
-  <button onclick="start()">▶ JOGAR</button>
+<div id="menu" class="menu">
+<h2>⚽ Fut de Botão JP</h2>
+<button onclick="startGame('ia')">Modo IA</button>
+<button onclick="startGame('2p')">2 Jogadores</button>
 </div>
 
-<div id="game" style="display:none">
-  <h3><span id="placar">0 x 0</span> | ⏱ <span id="tempo">80</span></h3>
-  <canvas id="c" width="320" height="520"></canvas>
-</div>
+<canvas id="game" width="360" height="640" class="hidden"></canvas>
 
 <script>
-let modo="ia";
-let forca=2;
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-const canvas=document.getElementById("c");
-const ctx=canvas.getContext("2d");
+let mode = "ia";
+let ball, players, enemy, goal1, goal2;
+let score1=0, score2=0;
+let time=72;
 
-let tempo=80;
-let a=0,b=0;
+const teams = [
+ {name:"Fantasma FC",color:"#7a1fa2",players:["JP 11","Ninho 10"]},
+ {name:"Raio de Gelo",color:"#00ffff",players:["Adriano 09","Luan 08"]},
+ {name:"Praia do Dragão",color:"#ff2a2a",players:["Vanessa 10","Noah 07"]},
+ {name:"Gamers FC",color:"#39ff14",players:["Julia 05","Dores 10"]},
+ {name:"Trovão",color:"#ffaa00",players:["Rafa 09","Igor 11"]},
+ {name:"Leões",color:"#ffd700",players:["Pedro 10","Caio 07"]},
+ {name:"Fênix",color:"#ff66cc",players:["Leo 11","Bruno 09"]},
+ {name:"Gladiadores",color:"#aaa",players:["Alan 10","Victor 08"]}
+];
 
-const bola={x:160,y:260,vx:0,vy:0,r:7};
-
-const p1={x:160,y:430,r:18,cor:"#7b2cbf"};
-const p2={x:200,y:430,r:18,cor:"#7b2cbf"};
-
-const cpu1={x:140,y:120,r:18,cor:"#ff2d2d"};
-const cpu2={x:180,y:120,r:18,cor:"#ff2d2d"};
-
-let touch=null;
-
-canvas?.addEventListener("touchstart",e=>touch=e.touches[0]);
-canvas?.addEventListener("touchmove",e=>touch=e.touches[0]);
-canvas?.addEventListener("touchend",()=>touch=null);
-
-function start(){
-  document.getElementById("menu").style.display="none";
-  document.getElementById("game").style.display="block";
-  loop();
+function startGame(m){
+ mode=m;
+ document.getElementById("menu").classList.add("hidden");
+ canvas.classList.remove("hidden");
+ init();
 }
 
-function move(p){
-  if(!touch) return;
-  const r=canvas.getBoundingClientRect();
-  let tx=touch.clientX-r.left;
-  let ty=touch.clientY-r.top;
-  p.x+=(tx-p.x)*0.15;
-  p.y+=(ty-p.y)*0.15;
+function init(){
+ ball={x:180,y:320,vx:0,vy:0,r:7};
+
+ players=[
+  {x:140,y:500,r:18,color:"#7a1fa2",name:"JP 11"},
+  {x:220,y:540,r:18,color:"#7a1fa2",name:"Ninho 10"}
+ ];
+
+ enemy=[
+  {x:140,y:140,r:18,color:"#ff2a2a",name:"Adriano 09"},
+  {x:220,y:180,r:18,color:"#ff2a2a",name:"Sancha 08"}
+ ];
+
+ goal1={x:110,y:610,w:140,h:10};
+ goal2={x:110,y:20,w:140,h:10};
+
+ loop();
 }
 
-function cpuMove(p){
-  let dx=bola.x-p.x;
-  let dy=bola.y-p.y;
-  let d=Math.hypot(dx,dy);
-  if(d<250){
-    p.x+=dx*0.002*forca;
-    p.y+=dy*0.002*forca;
-  }
+const keys={};
+document.addEventListener("keydown",e=>keys[e.key]=true);
+document.addEventListener("keyup",e=>keys[e.key]=false);
+
+function control(p){
+ if(keys["ArrowLeft"]) p.x-=3;
+ if(keys["ArrowRight"]) p.x+=3;
+ if(keys["ArrowUp"]) p.y-=3;
+ if(keys["ArrowDown"]) p.y+=3;
 }
 
-function colisao(p){
-  let dx=bola.x-p.x;
-  let dy=bola.y-p.y;
-  let d=Math.hypot(dx,dy);
-  if(d<p.r+bola.r){
-    bola.vx=dx*0.25;
-    bola.vy=dy*0.25;
-  }
+function aiMove(p){
+ let dx=ball.x-p.x;
+ let dy=ball.y-p.y;
+ let d=Math.hypot(dx,dy);
+ if(d<220){
+  p.x+=dx/d*1.8;
+  p.y+=dy/d*1.8;
+ }
 }
 
-function draw(p){
-  ctx.beginPath();
-  ctx.fillStyle=p.cor;
-  ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-  ctx.fill();
+function collide(p){
+ let dx=ball.x-p.x;
+ let dy=ball.y-p.y;
+ let d=Math.hypot(dx,dy);
+ if(d<p.r+ball.r){
+  ball.vx=dx*0.25;
+  ball.vy=dy*0.25;
+ }
 }
 
-function loop(){
-  ctx.clearRect(0,0,320,520);
-
-  move(p1);
-  if(modo==="2p") move(p2);
-
-  if(modo==="ia"){
-    cpuMove(cpu1);
-    cpuMove(cpu2);
-  }
-
-  colisao(p1);
-  colisao(p2);
-  colisao(cpu1);
-  colisao(cpu2);
-
-  bola.x+=bola.vx;
-  bola.y+=bola.vy;
-  bola.vx*=0.98;
-  bola.vy*=0.98;
-
-  if(bola.y<0){ a++; reset(); }
-  if(bola.y>520){ b++; reset(); }
-
-  ctx.fillStyle="white";
-  ctx.beginPath();
-  ctx.arc(bola.x,bola.y,bola.r,0,Math.PI*2);
-  ctx.fill();
-
-  draw(p1); draw(p2); draw(cpu1); draw(cpu2);
-
-  document.getElementById("placar").innerText=a+" x "+b;
-
-  requestAnimationFrame(loop);
+function goalCheck(){
+ if(ball.y<30 && ball.x>110 && ball.x<250){
+  score1++; reset();
+ }
+ if(ball.y>610 && ball.x>110 && ball.x<250){
+  score2++; reset();
+ }
 }
 
 function reset(){
-  bola.x=160; bola.y=260;
-  bola.vx=0; bola.vy=0;
+ ball.x=180; ball.y=320;
+ ball.vx=0; ball.vy=0;
 }
 
-setInterval(()=>{
-  tempo--;
-  document.getElementById("tempo").innerText=tempo;
-  if(tempo<=0){
-    alert("Fim de jogo");
-    location.reload();
-  }
-},1000);
+function drawPlayer(p){
+ ctx.beginPath();
+ ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+ ctx.fillStyle=p.color;
+ ctx.fill();
+ ctx.fillStyle="#fff";
+ ctx.font="10px Arial";
+ ctx.fillText(p.name,p.x-20,p.y+4);
+}
+
+function loop(){
+ ctx.clearRect(0,0,360,640);
+
+ // campo
+ ctx.strokeStyle="#fff";
+ ctx.lineWidth=4;
+ ctx.strokeRect(20,20,320,600);
+
+ // gols
+ ctx.fillStyle="#fff";
+ ctx.fillRect(goal1.x,goal1.y,goal1.w,goal1.h);
+ ctx.fillRect(goal2.x,goal2.y,goal2.w,goal2.h);
+
+ // bola
+ ball.x+=ball.vx;
+ ball.y+=ball.vy;
+ ball.vx*=0.98;
+ ball.vy*=0.98;
+
+ ctx.beginPath();
+ ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
+ ctx.fillStyle="#fff";
+ ctx.fill();
+
+ // jogadores
+ control(players[0]);
+ control(players[1]);
+
+ enemy.forEach(e=>aiMove(e));
+
+ players.forEach(p=>{
+  collide(p);
+  drawPlayer(p);
+ });
+
+ enemy.forEach(e=>{
+  collide(e);
+  drawPlayer(e);
+ });
+
+ goalCheck();
+
+ // placar
+ ctx.fillStyle="#fff";
+ ctx.font="18px Arial";
+ ctx.fillText(score1+" x "+score2,150,40);
+
+ requestAnimationFrame(loop);
+}
 </script>
 
 </body>
