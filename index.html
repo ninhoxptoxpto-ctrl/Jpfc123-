@@ -6,170 +6,97 @@
 <title>Fut de Botão JP</title>
 
 <style>
-body{margin:0;background:#0a5c2d;color:white;font-family:Arial;text-align:center;}
-button{padding:14px 24px;font-size:18px;border:none;border-radius:14px;margin:6px;}
+body{margin:0;font-family:Arial;background:#0a5c2d;color:white;text-align:center;}
 #campo{width:320px;height:520px;background:#1f8f3f;margin:auto;position:relative;border:5px solid white;}
-.jogador,.cpu,.gk{width:36px;height:36px;border-radius:50%;position:absolute;font-size:9px;font-weight:bold;line-height:36px;}
-.jogador{background:purple;}
+.j,.cpu,.gk{width:36px;height:36px;border-radius:50%;position:absolute;font-size:9px;font-weight:bold;line-height:36px;}
+.j{background:purple;}
 .cpu{background:red;}
 .gk{background:#111;}
 .bola{width:14px;height:14px;background:white;border-radius:50%;position:absolute;}
+button{padding:14px 22px;font-size:18px;border:none;border-radius:14px;margin:5px;}
 </style>
 </head>
 
 <body>
 
-<!-- TELA TIME -->
-<div id="telaTime">
-  <h2>Escolha seu time</h2>
-  <button onclick="escolherTime('Fantasma FC','purple')">Fantasma FC</button><br>
-  <button onclick="escolherTime('Raio de Gelo','cyan')">Raio de Gelo</button><br>
-  <button onclick="escolherTime('Praia do Dragão','red')">Praia do Dragão</button><br>
-  <button onclick="escolherTime('Gamers','lime')">Gamers</button>
+<h2>⚽ FUT DE BOTÃO JP</h2>
+<div>⏱ <span id="tempo">80</span> | <span id="placar">0 x 0</span></div>
+
+<div id="campo">
+  <div class="bola" id="bola"></div>
+
+  <div class="j" id="j1">JP<br>11</div>
+  <div class="j" id="j2">Ninho<br>10</div>
+
+  <div class="cpu" id="c1">Adriano<br>09</div>
+  <div class="cpu" id="c2">Sancha<br>08</div>
+
+  <div class="gk" id="gkCpu">GK</div>
 </div>
 
-<!-- TELA NIVEL -->
-<div id="telaNivel" style="display:none">
-  <h2>Escolha a dificuldade</h2>
-  <button onclick="escolherNivel(1)">Fácil</button>
-  <button onclick="escolherNivel(2)">Médio</button>
-  <button onclick="escolherNivel(3)">Difícil</button>
-</div>
+<br>
 
-<!-- JOGO -->
-<div id="jogo" style="display:none">
-  <h3 id="info"></h3>
-  ⏱️ <span id="tempo">80</span> | <span id="placar">0 x 0</span>
+<button onclick="mover(0,-20)">⬆️</button><br>
+<button onclick="mover(-20,0)">⬅️</button>
+<button onclick="mover(20,0)">➡️</button><br>
+<button onclick="mover(0,20)">⬇️</button><br><br>
 
-  <div id="campo">
-    <div class="bola" id="bola"></div>
-
-    <div class="jogador" id="j1">JP<br>11</div>
-    <div class="jogador" id="j2">Ninho<br>10</div>
-
-    <div class="cpu" id="c1">Adriano<br>09</div>
-    <div class="cpu" id="c2">Sancha<br>08</div>
-
-    <div class="gk" id="gkMeu">GK</div>
-    <div class="gk" id="gkCpu">GK</div>
-  </div>
-
-  <br>
-  <button onclick="mover(0,-20)">⬆️</button><br>
-  <button onclick="mover(-20,0)">⬅️</button>
-  <button onclick="mover(20,0)">➡️</button><br>
-  <button onclick="mover(0,20)">⬇️</button><br><br>
-
-  <button onclick="passar()">🔁 Passe</button>
-  <button onclick="chutar()">⚽ Chutar</button>
-</div>
+<button onclick="passar()">🔁 Passe</button>
+<button onclick="chutar()">🥅 Chute</button>
+<button onclick="desarme()">🛡 Desarme</button>
 
 <script>
-let meuTime="", corTime="", nivel=1;
-let tempo=80, placarMeu=0, placarCpu=0;
-let jogadorAtual=0;
-
 let jogadores=[
- {x:140,y:420},
- {x:200,y:420}
+ {x:130,y:420,nome:"JP",gols:0},
+ {x:190,y:420,nome:"Ninho",gols:0}
 ];
 
 let cpu=[
- {x:140,y:160},
- {x:200,y:160}
+ {x:90,y:160},
+ {x:230,y:170}
 ];
 
 let bola={x:0,y:0,com:true,velY:0};
-
-let gkMeu={x:140,y:470};
 let gkCpu={x:140,y:10};
 
-function escolherTime(nome,cor){
-  meuTime=nome;
-  corTime=cor;
-  document.getElementById("telaTime").style.display="none";
-  document.getElementById("telaNivel").style.display="block";
-}
-
-function escolherNivel(n){
-  nivel=n;
-  document.getElementById("telaNivel").style.display="none";
-  document.getElementById("jogo").style.display="block";
-  document.getElementById("info").innerText=meuTime+" | Nível "+(n==1?"Fácil":n==2?"Médio":"Difícil");
-  document.querySelectorAll(".jogador").forEach(j=>j.style.background=corTime);
-  iniciar();
-}
-
-function iniciar(){
-  setInterval(loop,30);
-  setInterval(()=>{
-    tempo--;
-    document.getElementById("tempo").innerText=tempo;
-    if(tempo<=0){ alert("Fim de jogo"); location.reload(); }
-  },1000);
-}
-
-function loop(){
-  if(!bola.com){
-    bola.y+=bola.velY;
-
-    let velGK= nivel*2;
-    if(bola.velY<0){
-      if(bola.x>gkCpu.x) gkCpu.x+=velGK;
-      if(bola.x<gkCpu.x) gkCpu.x-=velGK;
-    }
-
-    if(bola.y<40 && Math.abs(bola.x-gkCpu.x)<25){
-      bola.com=true; bola.velY=0;
-    }
-
-    if(bola.y<0){
-      placarMeu++;
-      bola.com=true; bola.velY=0;
-    }
-  }
-
-  cpu.forEach(c=>{
-    c.y += (bola.y<c.y?-1:1)*nivel;
-    c.x += (bola.x<c.x?-1:1)*nivel;
-  });
-
-  desenhar();
-}
+let atual=0;
+let tempo=80;
+let meu=0,cpuGol=0;
 
 function desenhar(){
   jogadores.forEach((j,i)=>{
     let e=document.getElementById("j"+(i+1));
-    e.style.left=j.x+"px"; e.style.top=j.y+"px";
-  });
-  cpu.forEach((c,i)=>{
-    let e=document.getElementById("c"+(i+1));
-    e.style.left=c.x+"px"; e.style.top=c.y+"px";
+    e.style.left=j.x+"px";
+    e.style.top=j.y+"px";
   });
 
-  document.getElementById("gkMeu").style.left=gkMeu.x+"px";
-  document.getElementById("gkMeu").style.top=gkMeu.y+"px";
+  cpu.forEach((c,i)=>{
+    let e=document.getElementById("c"+(i+1));
+    e.style.left=c.x+"px";
+    e.style.top=c.y+"px";
+  });
+
   document.getElementById("gkCpu").style.left=gkCpu.x+"px";
   document.getElementById("gkCpu").style.top=gkCpu.y+"px";
 
   if(bola.com){
-    let j=jogadores[jogadorAtual];
-    bola.x=j.x+11; bola.y=j.y-10;
+    bola.x=jogadores[atual].x+11;
+    bola.y=jogadores[atual].y-10;
   }
 
   document.getElementById("bola").style.left=bola.x+"px";
   document.getElementById("bola").style.top=bola.y+"px";
 
-  document.getElementById("placar").innerText=placarMeu+" x "+placarCpu;
+  document.getElementById("placar").innerText=meu+" x "+cpuGol;
 }
 
 function mover(dx,dy){
-  jogadores[jogadorAtual].x+=dx;
-  jogadores[jogadorAtual].y+=dy;
+  jogadores[atual].x+=dx;
+  jogadores[atual].y+=dy;
 }
 
 function passar(){
-  jogadorAtual = jogadorAtual==0?1:0;
+  atual=atual===0?1:0;
 }
 
 function chutar(){
@@ -177,6 +104,68 @@ function chutar(){
   bola.com=false;
   bola.velY=-12;
 }
+
+function desarme(){
+  cpu.forEach(c=>{
+    let dx=bola.x-c.x;
+    let dy=bola.y-c.y;
+    let d=Math.sqrt(dx*dx+dy*dy);
+    if(d<25){
+      bola.com=true;
+    }
+  });
+}
+
+setInterval(()=>{
+  if(!bola.com){
+    bola.y+=bola.velY;
+
+    // goleiro mais rápido
+    if(bola.x>gkCpu.x) gkCpu.x+=4;
+    if(bola.x<gkCpu.x) gkCpu.x-=4;
+
+    // defesa
+    if(bola.y<40 && Math.abs(bola.x-gkCpu.x)<25){
+      bola.com=true;
+    }
+
+    // gol
+    if(bola.y<0){
+      meu++;
+      jogadores[atual].gols++;
+      bola.com=true;
+      alert("⚽ GOL!");
+    }
+  }
+
+  // cpu separada
+  cpu.forEach((c,i)=>{
+    let alvoX = bola.x + (i===0?-40:40);
+    if(alvoX<c.x) c.x-=1.5;
+    if(alvoX>c.x) c.x+=1.5;
+    if(bola.y<c.y) c.y-=1.5;
+    if(bola.y>c.y) c.y+=1.5;
+  });
+
+  desenhar();
+},30);
+
+setInterval(()=>{
+  tempo--;
+  document.getElementById("tempo").innerText=tempo;
+  if(tempo<=0){
+    let art=jogadores.sort((a,b)=>b.gols-a.gols)[0];
+    alert(
+      "📊 FIM DO JOGO\n\n"+
+      "Placar: "+meu+" x "+cpuGol+
+      "\n⭐ Artilheiro: "+art.nome+
+      " ("+art.gols+" gols)"
+    );
+    location.reload();
+  }
+},1000);
+
+desenhar();
 </script>
 
 </body>
