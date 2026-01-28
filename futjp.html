@@ -9,27 +9,24 @@
 body{margin:0;background:#0b7a3b;font-family:Arial;overflow:hidden}
 #top{color:#fff;text-align:center;padding:8px;font-size:18px;font-weight:bold}
 canvas{display:block;margin:auto;background:#1ec95b}
+#golText{
+position:fixed;top:40%;width:100%;
+text-align:center;font-size:48px;
+color:yellow;font-weight:bold;
+display:none;text-shadow:3px 3px 8px #000
+}
 #controls{
 position:fixed;bottom:10px;width:100%;
 display:flex;justify-content:space-around
 }
-.btn{
-width:64px;height:64px;border-radius:50%;
-border:none;font-size:22px;background:#fff
-}
-#gol{
-position:fixed;top:45%;width:100%;
-text-align:center;font-size:42px;
-color:yellow;font-weight:bold;
-display:none;text-shadow:3px 3px 8px #000
-}
+.btn{width:64px;height:64px;border-radius:50%;border:none;font-size:22px}
 </style>
 </head>
 
 <body>
 
 <div id="top">⚽ 0 x 0 | ⏱️ 01:20</div>
-<div id="gol">GOOOOOL!!!</div>
+<div id="golText">GOOOOOL!!!</div>
 
 <canvas id="game" width="360" height="640"></canvas>
 
@@ -51,46 +48,51 @@ let key="";
 
 const field={x:20,y:20,w:320,h:600};
 
+const goalTop={x:150,y:20,w:60,h:10};
+const goalBottom={x:150,y:630,w:60,h:10};
+
 const ball={x:180,y:320,vx:0,vy:0,r:8};
 
 const players=[
-{x:130,y:520,vx:0,vy:0,r:18,color:"#7b2cff",ai:false},
-{x:230,y:520,vx:0,vy:0,r:18,color:"#00ff9c",ai:false},
-
-{x:130,y:120,vx:0,vy:0,r:18,color:"#ff3333",ai:true},
-{x:230,y:120,vx:0,vy:0,r:18,color:"#00e5ff",ai:true}
+{x:180,y:520,vx:0,vy:0,r:18,color:"#7b2cff",ai:false},
+{x:180,y:120,vx:0,vy:0,r:18,color:"#ff3333",ai:true}
 ];
 
 function kick(){
-players.forEach(p=>{
+let p=players[0];
 let dx=ball.x-p.x;
 let dy=ball.y-p.y;
 let d=Math.hypot(dx,dy);
-if(d<28){
-ball.vx=dx*0.9;
-ball.vy=dy*0.9;
+if(d<30){
+ball.vx=dx*1.1;
+ball.vy=dy*1.1;
 }
-});
 }
 
-function ai(p){
+function aiMove(p){
+let goalX=180;
+let goalY=620;
+
 let dx=ball.x-p.x;
 let dy=ball.y-p.y;
 let d=Math.hypot(dx,dy)||1;
-p.vx+=dx/d*0.25;
-p.vy+=dy/d*0.25;
 
-if(d<26 && Math.random()<0.08){
-ball.vx=dx*0.9;
-ball.vy=dy*0.9;
+p.vx+=dx/d*0.3;
+p.vy+=dy/d*0.3;
+
+// se estiver perto da bola → chuta pro gol
+if(d<28){
+let gx=goalX-ball.x;
+let gy=goalY-ball.y;
+let gd=Math.hypot(gx,gy)||1;
+ball.vx=gx/gd*5;
+ball.vy=gy/gd*5;
 }
 }
 
 function move(p){
-p.x+=p.vx;
-p.y+=p.vy;
-p.vx*=0.93;
-p.vy*=0.93;
+p.x+=p.vx;p.y+=p.vy;
+p.vx*=0.92;p.vy*=0.92;
 
 if(p.x-p.r<field.x){p.x=field.x+p.r;p.vx*=-1}
 if(p.x+p.r>field.x+field.w){p.x=field.x+field.w-p.r;p.vx*=-1}
@@ -100,21 +102,24 @@ if(p.y+p.r>field.y+field.h){p.y=field.y+field.h-p.r;p.vy*=-1}
 let dx=ball.x-p.x;
 let dy=ball.y-p.y;
 let d=Math.hypot(dx,dy);
-
 if(d<p.r+ball.r){
-ball.x=p.x+dx/d*(p.r+ball.r);
-ball.y=p.y+dy/d*(p.r+ball.r);
-ball.vx+=dx*0.12;
-ball.vy+=dy*0.12;
+ball.vx+=dx*0.15;
+ball.vy+=dy*0.15;
 }
 }
 
-function control(){
-let p=players[0];
-if(key=="up")p.vy-=0.7;
-if(key=="down")p.vy+=0.7;
-if(key=="left")p.vx-=0.7;
-if(key=="right")p.vx+=0.7;
+function goal(){
+document.getElementById("golText").style.display="block";
+setTimeout(()=>{
+document.getElementById("golText").style.display="none";
+reset();
+},1000);
+}
+
+function reset(){
+ball.x=180;ball.y=320;ball.vx=0;ball.vy=0;
+players[0].x=180;players[0].y=520;
+players[1].x=180;players[1].y=120;
 }
 
 function drawField(){
@@ -122,53 +127,34 @@ ctx.strokeStyle="#fff";
 ctx.lineWidth=4;
 ctx.strokeRect(field.x,field.y,field.w,field.h);
 
-ctx.beginPath();
-ctx.moveTo(20,320);
-ctx.lineTo(340,320);
-ctx.stroke();
-
-ctx.beginPath();
-ctx.arc(180,320,60,0,Math.PI*2);
-ctx.stroke();
-
-ctx.fillRect(5,280,10,80);
-ctx.fillRect(345,280,10,80);
-}
-
-function goal(){
-document.getElementById("gol").style.display="block";
-setTimeout(()=>{
-document.getElementById("gol").style.display="none";
-reset();
-},1000);
-}
-
-function reset(){
-ball.x=180;ball.y=320;ball.vx=0;ball.vy=0;
-players[0].x=130;players[0].y=520;
-players[1].x=230;players[1].y=520;
-players[2].x=130;players[2].y=120;
-players[3].x=230;players[3].y=120;
+ctx.fillStyle="#fff";
+ctx.fillRect(goalTop.x,goalTop.y,goalTop.w,goalTop.h);
+ctx.fillRect(goalBottom.x,goalBottom.y,goalBottom.w,goalBottom.h);
 }
 
 function update(){
 ctx.clearRect(0,0,360,640);
 
-control();
+if(key=="up")players[0].vy-=0.8;
+if(key=="down")players[0].vy+=0.8;
+if(key=="left")players[0].vx-=0.8;
+if(key=="right")players[0].vx+=0.8;
 
-players.forEach(p=>{
-if(p.ai) ai(p);
-move(p);
-});
+aiMove(players[1]);
+
+players.forEach(p=>move(p));
 
 ball.x+=ball.vx;
 ball.y+=ball.vy;
 ball.vx*=0.99;
 ball.vy*=0.99;
 
-if(ball.y>280&&ball.y<360){
-if(ball.x<5){scoreB++;goal()}
-if(ball.x>355){scoreA++;goal()}
+// gols
+if(ball.y<25 && ball.x>150 && ball.x<210){
+scoreA++;goal();
+}
+if(ball.y>615 && ball.x>150 && ball.x<210){
+scoreB++;goal();
 }
 
 drawField();
@@ -178,7 +164,6 @@ ctx.beginPath();
 ctx.fillStyle=p.color;
 ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
 ctx.fill();
-ctx.stroke();
 });
 
 ctx.beginPath();
