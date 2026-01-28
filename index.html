@@ -8,14 +8,20 @@
 body{margin:0;background:#0b5d2a;font-family:Arial;color:white;text-align:center}
 #menu{padding:20px}
 select,button{padding:10px;margin:6px;font-size:15px}
+#placar{margin:10px;font-size:20px}
+
 #campo{
   width:320px;height:480px;margin:auto;
   background:#1e7f3f;border:4px solid white;
   position:relative;display:none
 }
-.gol{position:absolute;left:100px;width:120px;height:30px;border:3px solid white}
-#golsup{top:0} #golinf{bottom:0}
-.jogador,.zagueiro,.bola{
+.gol{
+  position:absolute;left:100px;width:120px;height:30px;border:3px solid white
+}
+#golsup{top:0} 
+#golinf{bottom:0}
+
+.jogador,.zagueiro{
   position:absolute;width:26px;height:26px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   font-size:9px;font-weight:bold;color:white
@@ -24,7 +30,10 @@ select,button{padding:10px;margin:6px;font-size:15px}
   position:absolute;width:44px;height:14px;
   background:black;border-radius:6px
 }
-.bola{width:12px;height:12px;background:white}
+.bola{
+  position:absolute;width:12px;height:12px;
+  background:white;border-radius:50%
+}
 </style>
 </head>
 
@@ -32,6 +41,7 @@ select,button{padding:10px;margin:6px;font-size:15px}
 
 <div id="menu">
   <h3>⚽ Escolha os times</h3>
+
   <p>Seu time</p>
   <select id="meuTime">
     <option value="#00e676">Fantasma FC</option>
@@ -50,6 +60,8 @@ select,button{padding:10px;margin:6px;font-size:15px}
 
   <button onclick="start()">▶️ Jogar</button>
 </div>
+
+<h3 id="placar">🏠 0 x 0 🛫</h3>
 
 <div id="campo">
   <div id="golsup" class="gol"></div>
@@ -80,6 +92,12 @@ select,button{padding:10px;margin:6px;font-size:15px}
 <script>
 const el=id=>document.getElementById(id);
 
+/* PLACAR */
+let golsMeu=0, golsAdv=0;
+function atualizarPlacar(){
+  el("placar").innerText = "🏠 " + golsMeu + " x " + golsAdv + " 🛫";
+}
+
 /* POSIÇÕES */
 const j1={x:130,y:360};
 const j2={x:190,y:360};
@@ -106,6 +124,7 @@ function start(){
   el("menu").style.display="none";
   el("campo").style.display="block";
   el("controles").style.display="block";
+  atualizarPlacar();
   draw();
 }
 
@@ -113,15 +132,13 @@ function pos(id,o){
   el(id).style.left=o.x+"px";
   el(id).style.top=o.y+"px";
 }
-
 function draw(){
   pos("j1",j1); pos("j2",j2);
   pos("z1",z1); pos("z2",z2);
   pos("gkMeu",gkMeu); pos("gkAdv",gkAdv);
   pos("bola",bola);
 }
-
-function jogador(){ return atual===1?j1:j2 }
+function jogador(){return atual===1?j1:j2}
 
 /* MOVIMENTO */
 function move(dx,dy){
@@ -135,21 +152,17 @@ function move(dx,dy){
 /* PASSE */
 function passe(){
   if(anim||dono!=="jogador")return;
-  anim=true;
-  bolaSolta=true;
-  let o=jogador();
-  let d=atual===1?j2:j1;
+  anim=true; bolaSolta=true;
+  let o=jogador(), d=atual===1?j2:j1;
   let i=0;
   let it=setInterval(()=>{
     bola.x+=(d.x-o.x)/20;
     bola.y+=(d.y-o.y)/20;
-    draw();
-    i++;
+    draw(); i++;
     if(i>20){
       clearInterval(it);
       atual=atual===1?2:1;
-      bolaSolta=false;
-      anim=false;
+      bolaSolta=false; anim=false;
     }
   },30);
 }
@@ -157,26 +170,21 @@ function passe(){
 /* CHUTE */
 function chutar(){
   if(anim||dono!=="jogador")return;
-  anim=true;
-  bolaSolta=true;
+  anim=true; bolaSolta=true;
   let curva=(Math.random()*6)-3;
   let it=setInterval(()=>{
-    bola.y-=14;
-    bola.x+=curva;
-    draw();
-
+    bola.y-=14; bola.x+=curva; draw();
     if(colide(bola,gkAdv)){
       if(Math.random()<0.35){
-        clearInterval(it);
-        alert("⚽ GOL!");
+        golsMeu++; atualizarPlacar();
+        alert("⚽ GOL SEU!");
       }
-      clearInterval(it);
-      reset();
+      clearInterval(it); reset();
     }
     if(bola.y<30){
-      clearInterval(it);
-      alert("⚽ GOL!");
-      reset();
+      golsMeu++; atualizarPlacar();
+      alert("⚽ GOL SEU!");
+      clearInterval(it); reset();
     }
   },30);
 }
@@ -188,11 +196,8 @@ function desarme(){
   [z1,z2].forEach(z=>{
     if(z.tem && colide(j,z)){
       if(Math.random()<0.65){
-        z.tem=false;
-        dono="jogador";
-        bolaSolta=false;
-        bola.x=j.x+7;
-        bola.y=j.y-12;
+        z.tem=false; dono="jogador"; bolaSolta=false;
+        bola.x=j.x+7; bola.y=j.y-12;
       }
     }
   });
@@ -207,13 +212,10 @@ setInterval(()=>{
       z.x+=(alvo.x-z.x)/18;
       z.y+=(alvo.y-z.y)/18;
       if(colide(z,bola)){
-        z.tem=true;
-        dono="adv";
-        bolaSolta=true;
+        z.tem=true; dono="adv"; bolaSolta=true;
       }
     }else{
-      bola.x=z.x+7;
-      bola.y=z.y+20;
+      bola.x=z.x+7; bola.y=z.y+20;
       z.y+=2.4;
       if(z.y>380) chuteAdv();
     }
@@ -225,21 +227,19 @@ setInterval(()=>{
 function chuteAdv(){
   z1.tem=false; z2.tem=false;
   let it=setInterval(()=>{
-    bola.y+=14;
-    draw();
+    bola.y+=14; draw();
     if(colide(bola,gkMeu)){
-      clearInterval(it);
-      reset();
+      clearInterval(it); reset();
     }
     if(bola.y>450){
-      clearInterval(it);
+      golsAdv++; atualizarPlacar();
       alert("😭 Gol do adversário");
-      reset();
+      clearInterval(it); reset();
     }
   },30);
 }
 
-/* GOLEIROS — SÓ COM BOLA SOLTA */
+/* GOLEIROS — só com bola solta */
 setInterval(()=>{
   if(!bolaSolta) return;
   gkMeu.x+=(bola.x-gkMeu.x)/6;
@@ -258,13 +258,10 @@ function reset(){
   z1.x=90; z1.y=200; z1.tem=false;
   z2.x=210; z2.y=200; z2.tem=false;
   bola.x=160; bola.y=330;
-  dono="jogador";
-  atual=1;
-  anim=false;
-  bolaSolta=false;
+  dono="jogador"; atual=1; anim=false; bolaSolta=false;
   draw();
 }
 </script>
 
 </body>
-      </html>
+  </html>
