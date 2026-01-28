@@ -3,139 +3,172 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fut de Botão JP</title>
+<title>Fut JP</title>
 
 <style>
 body{
   margin:0;
   background:#0b5d2a;
-  font-family:Arial;
   color:white;
+  font-family:Arial;
   text-align:center;
 }
 
-#top{
-  padding:10px;
-  font-size:20px;
-  font-weight:bold;
+button{
+  padding:14px 24px;
+  font-size:18px;
+  border:none;
+  border-radius:14px;
+  margin:8px;
 }
 
 canvas{
   background:#1f8f43;
-  border:5px solid #fff;
-  border-radius:12px;
-}
-
-#controles{
-  margin-top:10px;
-}
-
-button{
-  padding:12px 20px;
-  font-size:18px;
-  margin:5px;
-  border:none;
-  border-radius:10px;
+  border:6px solid #fff;
+  border-radius:16px;
+  touch-action:none;
 }
 </style>
 </head>
 
 <body>
 
-<div id="top">
-⚽ Fut de Botão JP<br>
-<span id="placar">0 x 0</span> | ⏱️ <span id="tempo">80</span>
+<div id="menu">
+  <h2>⚽ FUT DE BOTÃO JP</h2>
+
+  <h3>Modo</h3>
+  <button onclick="modo='ia'">🤖 IA</button>
+  <button onclick="modo='2p'">👥 2 Jogadores</button>
+
+  <h3>Força do Time</h3>
+  <button onclick="forca=1">🟢 Fraco</button>
+  <button onclick="forca=2">🟡 Médio</button>
+  <button onclick="forca=3">🔴 Forte</button>
+
+  <br><br>
+  <button onclick="start()">▶ JOGAR</button>
 </div>
 
-<canvas id="game" width="320" height="500"></canvas>
-
-<div id="controles">
-<button onclick="chutar()">🥅 Chutar</button>
+<div id="game" style="display:none">
+  <h3><span id="placar">0 x 0</span> | ⏱ <span id="tempo">80</span></h3>
+  <canvas id="c" width="320" height="520"></canvas>
 </div>
 
 <script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+let modo="ia";
+let forca=2;
 
-let tempo = 80;
-let placarA = 0;
-let placarB = 0;
+const canvas=document.getElementById("c");
+const ctx=canvas.getContext("2d");
 
-const bola = { x:160, y:250, vx:0, vy:0 };
+let tempo=80;
+let a=0,b=0;
 
-const timeA = [
-  {x:160,y:420,nome:"JP",num:11,cor:"#7b2cbf"},
-  {x:110,y:460,nome:"Ninho",num:10,cor:"#7b2cbf"}
-];
+const bola={x:160,y:260,vx:0,vy:0,r:7};
 
-const timeB = [
-  {x:160,y:80,nome:"Adriano",num:9,cor:"#ff2d2d"},
-  {x:110,y:120,nome:"Sancha",num:8,cor:"#ff2d2d"}
-];
+const p1={x:160,y:430,r:18,cor:"#7b2cbf"};
+const p2={x:200,y:430,r:18,cor:"#7b2cbf"};
 
-const goleiroA = {x:160,y:480,cor:"#000"};
-const goleiroB = {x:160,y:20,cor:"#000"};
+const cpu1={x:140,y:120,r:18,cor:"#ff2d2d"};
+const cpu2={x:180,y:120,r:18,cor:"#ff2d2d"};
 
-let jogadorAtual = timeA[0];
+let touch=null;
 
-document.addEventListener("keydown", e=>{
-  if(e.key=="ArrowUp") jogadorAtual.y-=10;
-  if(e.key=="ArrowDown") jogadorAtual.y+=10;
-  if(e.key=="ArrowLeft") jogadorAtual.x-=10;
-  if(e.key=="ArrowRight") jogadorAtual.x+=10;
-});
+canvas?.addEventListener("touchstart",e=>touch=e.touches[0]);
+canvas?.addEventListener("touchmove",e=>touch=e.touches[0]);
+canvas?.addEventListener("touchend",()=>touch=null);
 
-function chutar(){
-  const dx = bola.x - jogadorAtual.x;
-  const dy = bola.y - jogadorAtual.y;
-  bola.vx = dx * 0.2;
-  bola.vy = dy * 0.2;
+function start(){
+  document.getElementById("menu").style.display="none";
+  document.getElementById("game").style.display="block";
+  loop();
 }
 
-function desenharJogador(p){
+function move(p){
+  if(!touch) return;
+  const r=canvas.getBoundingClientRect();
+  let tx=touch.clientX-r.left;
+  let ty=touch.clientY-r.top;
+  p.x+=(tx-p.x)*0.15;
+  p.y+=(ty-p.y)*0.15;
+}
+
+function cpuMove(p){
+  let dx=bola.x-p.x;
+  let dy=bola.y-p.y;
+  let d=Math.hypot(dx,dy);
+  if(d<250){
+    p.x+=dx*0.002*forca;
+    p.y+=dy*0.002*forca;
+  }
+}
+
+function colisao(p){
+  let dx=bola.x-p.x;
+  let dy=bola.y-p.y;
+  let d=Math.hypot(dx,dy);
+  if(d<p.r+bola.r){
+    bola.vx=dx*0.25;
+    bola.vy=dy*0.25;
+  }
+}
+
+function draw(p){
   ctx.beginPath();
-  ctx.fillStyle = p.cor;
-  ctx.arc(p.x,p.y,15,0,Math.PI*2);
+  ctx.fillStyle=p.cor;
+  ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
   ctx.fill();
-  ctx.fillStyle="white";
-  ctx.font="10px Arial";
-  ctx.fillText(p.num,p.x-5,p.y+4);
 }
 
 function loop(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.clearRect(0,0,320,520);
 
-  bola.x += bola.vx;
-  bola.y += bola.vy;
-  bola.vx *= 0.98;
-  bola.vy *= 0.98;
+  move(p1);
+  if(modo==="2p") move(p2);
 
-  ctx.beginPath();
+  if(modo==="ia"){
+    cpuMove(cpu1);
+    cpuMove(cpu2);
+  }
+
+  colisao(p1);
+  colisao(p2);
+  colisao(cpu1);
+  colisao(cpu2);
+
+  bola.x+=bola.vx;
+  bola.y+=bola.vy;
+  bola.vx*=0.98;
+  bola.vy*=0.98;
+
+  if(bola.y<0){ a++; reset(); }
+  if(bola.y>520){ b++; reset(); }
+
   ctx.fillStyle="white";
-  ctx.arc(bola.x,bola.y,6,0,Math.PI*2);
-  ctx.fill();
-
-  timeA.forEach(desenharJogador);
-  timeB.forEach(desenharJogador);
-
-  ctx.fillStyle="black";
   ctx.beginPath();
-  ctx.arc(goleiroA.x,goleiroA.y,18,0,Math.PI*2);
+  ctx.arc(bola.x,bola.y,bola.r,0,Math.PI*2);
   ctx.fill();
 
-  ctx.beginPath();
-  ctx.arc(goleiroB.x,goleiroB.y,18,0,Math.PI*2);
-  ctx.fill();
+  draw(p1); draw(p2); draw(cpu1); draw(cpu2);
+
+  document.getElementById("placar").innerText=a+" x "+b;
 
   requestAnimationFrame(loop);
 }
 
+function reset(){
+  bola.x=160; bola.y=260;
+  bola.vx=0; bola.vy=0;
+}
+
 setInterval(()=>{
   tempo--;
-  document.getElementById("tempo").innerText = tempo;
+  document.getElementById("tempo").innerText=tempo;
+  if(tempo<=0){
+    alert("Fim de jogo");
+    location.reload();
+  }
 },1000);
-
-loop();
 </script>
 
 </body>
