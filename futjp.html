@@ -31,12 +31,12 @@ border:6px solid white;
 
 #controls{
 position:absolute;
-bottom:20px;
+bottom:160px; /* 👈 BOTÕES MAIS PRA CIMA */
 width:100%;
 display:flex;
 justify-content:center;
 align-items:center;
-gap:20px;
+gap:25px;
 }
 
 #dir{
@@ -88,46 +88,31 @@ font-size:28px;
 </div>
 
 <script>
-const c = document.getElementById("game");
-const ctx = c.getContext("2d");
+const c=document.getElementById("game");
+const ctx=c.getContext("2d");
 
-const W = c.width;
-const H = c.height;
+const W=c.width,H=c.height;
 
-let scoreA=0, scoreB=0;
-let time=120;
+let scoreA=0,scoreB=0,time=120;
 
 const field={x:20,y:20,w:380,h:680};
 
-const goalW=140, goalH=14;
+const goalW=140,goalH=14;
 
-const goalTop={
-x:field.x+field.w/2-goalW/2,
-y:field.y-2,w:goalW,h:goalH};
-
-const goalBottom={
-x:field.x+field.w/2-goalW/2,
-y:field.y+field.h-12,w:goalW,h:goalH};
+const goalTop={x:field.x+field.w/2-goalW/2,y:field.y-2,w:goalW,h:goalH};
+const goalBottom={x:field.x+field.w/2-goalW/2,y:field.y+field.h-12,w:goalW,h:goalH};
 
 const p1={x:W/2,y:H-130,r:16,color:"#8e44ad",vx:0,vy:0};
 const p2={x:W/2,y:130,r:16,color:"#00d2ff",vx:0,vy:0};
-
 const ball={x:W/2,y:H/2,r:8,vx:0,vy:0};
 
 function reset(){
-ball.x=W/2;
-ball.y=H/2;
-ball.vx=0;
-ball.vy=0;
-
-p1.x=W/2;
-p1.y=H-130;
-
-p2.x=W/2;
-p2.y=130;
+ball.x=W/2; ball.y=H/2; ball.vx=0; ball.vy=0;
+p1.x=W/2; p1.y=H-130;
+p2.x=W/2; p2.y=130;
 }
 
-function drawField(){
+function fieldDraw(){
 ctx.strokeStyle="white";
 ctx.lineWidth=4;
 ctx.strokeRect(field.x,field.y,field.w,field.h);
@@ -168,8 +153,7 @@ o.y=field.y+field.h-o.r;o.vy*=-0.8;}
 }
 
 function collide(p){
-let dx=ball.x-p.x;
-let dy=ball.y-p.y;
+let dx=ball.x-p.x, dy=ball.y-p.y;
 let d=Math.hypot(dx,dy);
 if(d<p.r+ball.r){
 let a=Math.atan2(dy,dx);
@@ -179,33 +163,21 @@ ball.vy=Math.sin(a)*6;
 }
 
 function update(){
-p1.x+=p1.vx;
-p1.y+=p1.vy;
-p2.x+=p2.vx;
-p2.y+=p2.vy;
-
-ball.x+=ball.vx;
-ball.y+=ball.vy;
+p1.x+=p1.vx; p1.y+=p1.vy;
+p2.x+=p2.vx; p2.y+=p2.vy;
+ball.x+=ball.vx; ball.y+=ball.vy;
 
 p1.vx*=0.85; p1.vy*=0.85;
 p2.vx*=0.90; p2.vy*=0.90;
 ball.vx*=0.99; ball.vy*=0.99;
 
 wall(p1); wall(p2); wall(ball);
+collide(p1); collide(p2);
 
-collide(p1);
-collide(p2);
-
-// gols
-if(ball.y-ball.r<=field.y &&
-ball.x>goalTop.x &&
-ball.x<goalTop.x+goalTop.w){
+if(ball.y-ball.r<=field.y && ball.x>goalTop.x && ball.x<goalTop.x+goalTop.w){
 scoreB++; reset();
 }
-
-if(ball.y+ball.r>=field.y+field.h &&
-ball.x>goalBottom.x &&
-ball.x<goalBottom.x+goalBottom.w){
+if(ball.y+ball.r>=field.y+field.h && ball.x>goalBottom.x && ball.x<goalBottom.x+goalBottom.w){
 scoreA++; reset();
 }
 
@@ -214,28 +186,22 @@ document.getElementById("score").innerText=scoreA+" x "+scoreB;
 
 function draw(){
 ctx.clearRect(0,0,W,H);
-drawField();
+fieldDraw();
 circle(ball);
 circle(p1);
 circle(p2);
 }
 
-function loop(){
-update();
-draw();
-requestAnimationFrame(loop);
-}
+function loop(){update();draw();requestAnimationFrame(loop);}
 loop();
 
-// CONTROLES
 document.getElementById("up").ontouchstart=()=>p1.vy=-4;
 document.getElementById("down").ontouchstart=()=>p1.vy=4;
 document.getElementById("left").ontouchstart=()=>p1.vx=-4;
 document.getElementById("right").ontouchstart=()=>p1.vx=4;
 
 document.getElementById("kick").ontouchstart=()=>{
-let dx=ball.x-p1.x;
-let dy=ball.y-p1.y;
+let dx=ball.x-p1.x, dy=ball.y-p1.y;
 let d=Math.hypot(dx,dy);
 if(d<35){
 let a=Math.atan2(dy,dx);
@@ -244,16 +210,13 @@ ball.vy=Math.sin(a)*10;
 }
 };
 
-// IA
 setInterval(()=>{
-let dx=ball.x-p2.x;
-let dy=ball.y-p2.y;
+let dx=ball.x-p2.x, dy=ball.y-p2.y;
 let a=Math.atan2(dy,dx);
 p2.vx=Math.cos(a)*2.4;
 p2.vy=Math.sin(a)*2.4;
 },40);
 
-// TEMPO
 setInterval(()=>{
 if(time>0){
 time--;
