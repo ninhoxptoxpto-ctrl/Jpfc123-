@@ -3,205 +3,268 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fut de Botão JP Ultimate</title>
-<link rel="stylesheet" href="style.css">
+<title>Fut de Botão JP</title>
+
+<style>
+body{
+margin:0;
+background:#0b6b3a;
+font-family:Arial;
+overflow:hidden;
+}
+
+#placar{
+position:fixed;
+top:10px;
+left:50%;
+transform:translateX(-50%);
+background:black;
+color:white;
+padding:10px 25px;
+border-radius:25px;
+font-size:22px;
+text-align:center;
+z-index:10;
+}
+
+#tempo{
+font-size:14px;
+margin-top:5px;
+}
+
+canvas{
+display:block;
+margin:70px auto 0;
+background:#2ecc71;
+border:6px solid white;
+}
+
+#controls{
+position:fixed;
+bottom:260px;
+width:100%;
+display:flex;
+justify-content:center;
+gap:25px;
+z-index:10;
+}
+
+#dir{
+display:grid;
+grid-template-columns:60px 60px 60px;
+grid-template-rows:60px 60px 60px;
+gap:6px;
+}
+
+.btn{
+width:60px;
+height:60px;
+border-radius:50%;
+border:none;
+font-size:24px;
+}
+
+#kick{
+width:70px;
+height:70px;
+font-size:28px;
+}
+</style>
 </head>
 
 <body>
 
 <div id="placar">
-  <span id="time1">0</span> x <span id="time2">0</span>
-  <div id="tempo">03:00</div>
+<span id="score">0 x 0</span>
+<div id="tempo">02:00</div>
 </div>
 
-<div id="campo">
-  <div id="jogador1" class="jogador azul"></div>
-  <div id="jogador2" class="jogador roxo"></div>
-  <div id="bola"></div>
-  <div id="golTopo" class="gol"></div>
-  <div id="golBaixo" class="gol"></div>
+<canvas id="game" width="420" height="720"></canvas>
+
+<div id="controls">
+<div id="dir">
+<div></div>
+<button class="btn" id="up">↑</button>
+<div></div>
+
+<button class="btn" id="left">←</button>
+<div></div>
+<button class="btn" id="right">→</button>
+
+<div></div>
+<button class="btn" id="down">↓</button>
+<div></div>
 </div>
 
-<div id="controles">
-  <button onclick="mover(0,-10)">↑</button><br>
-  <button onclick="mover(-10,0)">←</button>
-  <button onclick="mover(10,0)">→</button><br>
-  <button onclick="mover(0,10)">↓</button>
-  <button onclick="chutar()">⚽</button>
+<button class="btn" id="kick">⚽</button>
 </div>
 
-<audio id="somChute" src="chute.mp3"></audio>
-<audio id="somGol" src="gol.mp3"></audio>
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-<script src="script.js"></script>
-</body>
-</html>body {
-  margin: 0;
-  background: #0b6b3a;
-  font-family: Arial;
-  text-align: center;
+const W = canvas.width;
+const H = canvas.height;
+
+let scoreA = 0;
+let scoreB = 0;
+let time = 120;
+
+const field = {x:20,y:20,w:380,h:680};
+const goalW = 140;
+
+const goalTop = {
+x:field.x + field.w/2 - goalW/2,
+y:field.y - 2,
+w:goalW
+};
+
+const goalBottom = {
+x:field.x + field.w/2 - goalW/2,
+y:field.y + field.h - 12,
+w:goalW
+};
+
+const p1 = {x:W/2,y:H-130,r:16,vx:0,vy:0,color:"#8e44ad"};
+const p2 = {x:W/2,y:130,r:16,vx:0,vy:0,color:"#00d2ff"};
+
+const ball = {x:W/2,y:H/2,r:8,vx:0,vy:0};
+
+function reset(){
+ball.x=W/2; ball.y=H/2; ball.vx=0; ball.vy=0;
+p1.x=W/2; p1.y=H-130;
+p2.x=W/2; p2.y=130;
 }
 
-#campo {
-  width: 360px;
-  height: 640px;
-  background: #2ecc71;
-  margin: 70px auto;
-  position: relative;
-  border: 5px solid white;
+function drawField(){
+ctx.strokeStyle="white";
+ctx.lineWidth=4;
+ctx.strokeRect(field.x,field.y,field.w,field.h);
+
+ctx.beginPath();
+ctx.arc(W/2,H/2,60,0,Math.PI*2);
+ctx.stroke();
+
+ctx.beginPath();
+ctx.moveTo(field.x,H/2);
+ctx.lineTo(field.x+field.w,H/2);
+ctx.stroke();
+
+ctx.fillRect(goalTop.x,goalTop.y,goalTop.w,10);
+ctx.fillRect(goalBottom.x,goalBottom.y,goalBottom.w,10);
 }
 
-.jogador {
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  position: absolute;
+function circle(o){
+ctx.beginPath();
+ctx.fillStyle=o.color || "white";
+ctx.arc(o.x,o.y,o.r,0,Math.PI*2);
+ctx.fill();
 }
 
-.azul { background: #00aaff; }
-.roxo { background: purple; }
+function wall(o){
+if(o.x-o.r<field.x){o.x=field.x+o.r;o.vx*=-0.8;}
+if(o.x+o.r>field.x+field.w){o.x=field.x+field.w-o.r;o.vx*=-0.8;}
 
-#bola {
-  width: 18px;
-  height: 18px;
-  background: white;
-  border-radius: 50%;
-  position: absolute;
+if(o.y-o.r<field.y){
+if(o.x<goalTop.x||o.x>goalTop.x+goalTop.w){
+o.y=field.y+o.r;o.vy*=-0.8;
+}
 }
 
-.gol {
-  width: 120px;
-  height: 10px;
-  background: #00ffff;
-  position: absolute;
-  left: 120px;
+if(o.y+o.r>field.y+field.h){
+if(o.x<goalBottom.x||o.x>goalBottom.x+goalBottom.w){
+o.y=field.y+field.h-o.r;o.vy*=-0.8;
+}
+}
 }
 
-#golTopo { top: 0; }
-#golBaixo { bottom: 0; }
-
-#placar {
-  position: fixed;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: black;
-  color: white;
-  padding: 8px 20px;
-  border-radius: 20px;
-  font-size: 20px;
+function collide(p){
+let dx=ball.x-p.x;
+let dy=ball.y-p.y;
+let d=Math.hypot(dx,dy);
+if(d<p.r+ball.r){
+let a=Math.atan2(dy,dx);
+ball.vx=Math.cos(a)*7;
+ball.vy=Math.sin(a)*7;
+}
 }
 
-#tempo {
-  font-size: 14px;
-  margin-top: 5px;
+function update(){
+p1.x+=p1.vx; p1.y+=p1.vy;
+p2.x+=p2.vx; p2.y+=p2.vy;
+ball.x+=ball.vx; ball.y+=ball.vy;
+
+p1.vx*=0.85; p1.vy*=0.85;
+p2.vx*=0.90; p2.vy*=0.90;
+ball.vx*=0.99; ball.vy*=0.99;
+
+wall(p1); wall(p2); wall(ball);
+collide(p1); collide(p2);
+
+if(ball.y-ball.r<=field.y &&
+ball.x>goalTop.x &&
+ball.x<goalTop.x+goalTop.w){
+scoreB++; reset();
 }
 
-#controles {
-  position: fixed;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
+if(ball.y+ball.r>=field.y+field.h &&
+ball.x>goalBottom.x &&
+ball.x<goalBottom.x+goalBottom.w){
+scoreA++; reset();
 }
 
-button {
-  width: 55px;
-  height: 55px;
-  border-radius: 50%;
-  font-size: 20px;
-}let jogador = document.getElementById("jogador1");
-let bola = document.getElementById("bola");
-
-let x = 170, y = 500;
-let bx = 180, by = 320;
-
-let vx = 0, vy = 0;
-
-let placar1 = 0;
-let placar2 = 0;
-
-jogador.style.left = x+"px";
-jogador.style.top = y+"px";
-bola.style.left = bx+"px";
-bola.style.top = by+"px";
-
-// MOVIMENTO
-function mover(dx, dy) {
-  x += dx;
-  y += dy;
-
-  x = Math.max(0, Math.min(335, x));
-  y = Math.max(0, Math.min(615, y));
-
-  jogador.style.left = x+"px";
-  jogador.style.top = y+"px";
+document.getElementById("score").innerText = scoreA+" x "+scoreB;
 }
 
-// CHUTE
-function chutar() {
-  document.getElementById("somChute").play();
-
-  let dx = bx - x;
-  let dy = by - y;
-  let dist = Math.sqrt(dx*dx + dy*dy);
-
-  if (dist < 40) {
-    vx = dx / dist * 6;
-    vy = dy / dist * 6;
-  }
+function draw(){
+ctx.clearRect(0,0,W,H);
+drawField();
+circle(ball);
+circle(p1);
+circle(p2);
 }
 
-// LOOP
-function loop() {
-  bx += vx;
-  by += vy;
-
-  vx *= 0.98;
-  vy *= 0.98;
-
-  // paredes
-  if (bx <= 0 || bx >= 340) vx *= -1;
-  if (by <= 0 || by >= 620) vy *= -1;
-
-  // gol
-  if (by <= 10 && bx > 120 && bx < 240) {
-    gol(2);
-  }
-
-  if (by >= 620 && bx > 120 && bx < 240) {
-    gol(1);
-  }
-
-  bola.style.left = bx+"px";
-  bola.style.top = by+"px";
-
-  requestAnimationFrame(loop);
+function loop(){
+update();
+draw();
+requestAnimationFrame(loop);
 }
-
 loop();
 
-// GOL
-function gol(time) {
-  document.getElementById("somGol").play();
+document.getElementById("up").ontouchstart=()=>p1.vy=-4;
+document.getElementById("down").ontouchstart=()=>p1.vy=4;
+document.getElementById("left").ontouchstart=()=>p1.vx=-4;
+document.getElementById("right").ontouchstart=()=>p1.vx=4;
 
-  if (time === 1) placar1++;
-  else placar2++;
-
-  document.getElementById("time1").innerText = placar1;
-  document.getElementById("time2").innerText = placar2;
-
-  bx = 180;
-  by = 320;
-  vx = 0;
-  vy = 0;
+document.getElementById("kick").ontouchstart=()=>{
+let dx=ball.x-p1.x;
+let dy=ball.y-p1.y;
+let d=Math.hypot(dx,dy);
+if(d<35){
+let a=Math.atan2(dy,dx);
+ball.vx=Math.cos(a)*10;
+ball.vy=Math.sin(a)*10;
 }
+};
 
-// ⏱️ TEMPO
-let tempo = 180;
+setInterval(()=>{
+let dx=ball.x-p2.x;
+let dy=ball.y-p2.y;
+let a=Math.atan2(dy,dx);
+p2.vx=Math.cos(a)*2.4;
+p2.vy=Math.sin(a)*2.4;
+},40);
 
-setInterval(() => {
-  tempo--;
-  let min = String(Math.floor(tempo / 60)).padStart(2,"0");
-  let sec = String(tempo % 60).padStart(2,"0");
-  document.getElementById("tempo").innerText = `${min}:${sec}`;
-}, 1000);
+setInterval(()=>{
+if(time>0){
+time--;
+let m=Math.floor(time/60);
+let s=time%60;
+document.getElementById("tempo").innerText =
+m+":"+(s<10?"0"+s:s);
+}
+},1000);
+</script>
+
+</body>
+</html>
